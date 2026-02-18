@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Save, Upload, Images, ClipboardCheck, ExternalLink, Trash2, Car, FileText, Wrench, Banknote, Info } from "lucide-react";
+import { ArrowRight, Save, Upload, Images, ClipboardCheck, ExternalLink, Trash2, Car, FileText, Wrench, Banknote, Info, Plus, X } from "lucide-react";
 import ManufacturerLogo from "@/components/ManufacturerLogo";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
@@ -44,7 +44,8 @@ export default function VehicleDetail() {
   const [inspectionFile, setInspectionFile] = useState<{ name: string; url: string; path: string } | null>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [uploadingInspection, setUploadingInspection] = useState(false);
-  
+  const [newExpense, setNewExpense] = useState({ expense_date: "", amount: "", description: "" });
+  const [addingExpense, setAddingExpense] = useState(false);
 
   const { data: vehicle, isLoading } = useQuery({
     queryKey: ["vehicle", id],
@@ -106,6 +107,52 @@ export default function VehicleDetail() {
     onError: (err: Error) => {
       toast({ title: "שגיאה", description: err.message, variant: "destructive" });
     },
+  });
+
+  // Expenses
+  const { data: expenses = [], refetch: refetchExpenses } = useQuery({
+    queryKey: ["vehicle_expenses", id],
+    queryFn: async () => {
+      if (isNew || !id) return [];
+      const { data, error } = await supabase
+        .from("vehicle_expenses" as any)
+        .select("*")
+        .eq("vehicle_id", id)
+        .order("expense_date", { ascending: false });
+      if (error) throw error;
+      return (data as unknown) as { id: string; expense_date: string; amount: number; description: string }[];
+    },
+    enabled: !isNew && !!id,
+  });
+
+  const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+
+  const addExpenseMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("vehicle_expenses" as any).insert({
+        vehicle_id: id,
+        expense_date: newExpense.expense_date || new Date().toISOString().slice(0, 10),
+        amount: Number(newExpense.amount) || 0,
+        description: newExpense.description,
+        created_by: user?.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setNewExpense({ expense_date: "", amount: "", description: "" });
+      setAddingExpense(false);
+      refetchExpenses();
+    },
+    onError: (err: Error) => toast({ title: "שגיאה", description: err.message, variant: "destructive" }),
+  });
+
+  const deleteExpenseMutation = useMutation({
+    mutationFn: async (expenseId: string) => {
+      const { error } = await supabase.from("vehicle_expenses" as any).delete().eq("id", expenseId);
+      if (error) throw error;
+    },
+    onSuccess: () => refetchExpenses(),
+    onError: (err: Error) => toast({ title: "שגיאה", description: err.message, variant: "destructive" }),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -312,12 +359,11 @@ export default function VehicleDetail() {
               <Field label="מחירון משוקלל" name="weighted_list_price" type="number" />
               <Field label="מחיר מבוקש" name="asking_price" type="number" />
               <Field label="מחיר קניה" name="purchase_price" type="number" />
-              <Field label="הוצאות" name="expenses" type="number" />
             </div>
             {/* Price summary bar – always visible when any price field exists */}
             {(form.asking_price != null || form.purchase_price != null) && (() => {
               const asking = form.asking_price ?? 0;
-              const cost = (form.purchase_price ?? 0) + (form.expenses ?? 0) + (form.registration_fee ?? 0);
+              const cost = (form.purchase_price ?? 0) + totalExpenses + (form.registration_fee ?? 0);
               const gross = asking - cost;
               const hasProfit = gross !== 0;
               const isProfit = gross > 0;
@@ -342,7 +388,7 @@ export default function VehicleDetail() {
                   {cost > 0 && asking > 0 && (
                     <div className="flex items-center gap-2 text-xs font-polin-light text-muted-foreground px-1">
                       <span>עלות כוללת = מחיר קניה</span>
-                      {form.expenses ? <span>+ הוצאות (₪{Number(form.expenses).toLocaleString()})</span> : null}
+                      {totalExpenses > 0 ? <span>+ הוצאות (₪{totalExpenses.toLocaleString()})</span> : null}
                       {form.registration_fee ? <span>+ אגרת רישוי (₪{Number(form.registration_fee).toLocaleString()})</span> : null}
                     </div>
                   )}
@@ -350,6 +396,100 @@ export default function VehicleDetail() {
               );
             })()}
           </Section>
+
+          {/* ── Expenses ── */}
+          {!isNew && (
+            <div className="bg-card rounded-2xl border shadow-card overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Banknote className="h-4 w-4 text-primary" />
+                  </div>
+                  <h2 className="font-polin-medium text-foreground">הוצאות</h2>
+                  {totalExpenses > 0 && (
+                    <span className="text-xs font-polin-light text-muted-foreground">
+                      סה"כ: <span className="font-polin-medium text-foreground">₪{totalExpenses.toLocaleString()}</span>
+                    </span>
+                  )}
+                </div>
+                {isAdmin && (
+                  <Button type="button" size="sm" variant="outline"
+                    className="gap-1.5 font-polin-light text-xs h-8"
+                    onClick={() => setAddingExpense(true)}>
+                    <Plus className="h-3.5 w-3.5" />הוסף הוצאה
+                  </Button>
+                )}
+              </div>
+              <div className="p-6 space-y-3">
+                {/* Add expense form */}
+                {addingExpense && isAdmin && (
+                  <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+                    <p className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">הוצאה חדשה</p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-polin-medium text-muted-foreground">תאריך</Label>
+                        <Input type="date" value={newExpense.expense_date}
+                          onChange={e => setNewExpense(p => ({ ...p, expense_date: e.target.value }))}
+                          className="h-9 font-polin-light" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-polin-medium text-muted-foreground">סכום (₪)</Label>
+                        <Input type="number" placeholder="0" value={newExpense.amount}
+                          onChange={e => setNewExpense(p => ({ ...p, amount: e.target.value }))}
+                          className="h-9 font-polin-light" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-polin-medium text-muted-foreground">פירוט</Label>
+                        <Input type="text" placeholder="תיאור ההוצאה" value={newExpense.description}
+                          onChange={e => setNewExpense(p => ({ ...p, description: e.target.value }))}
+                          className="h-9 font-polin-light" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button type="button" variant="ghost" size="sm" className="text-xs font-polin-light gap-1"
+                        onClick={() => { setAddingExpense(false); setNewExpense({ expense_date: "", amount: "", description: "" }); }}>
+                        <X className="h-3.5 w-3.5" />ביטול
+                      </Button>
+                      <Button type="button" size="sm"
+                        className="text-xs font-polin-medium gap-1 bg-primary hover:bg-primary/90"
+                        disabled={addExpenseMutation.isPending || !newExpense.amount}
+                        onClick={() => addExpenseMutation.mutate()}>
+                        <Plus className="h-3.5 w-3.5" />
+                        {addExpenseMutation.isPending ? "שומר..." : "שמור הוצאה"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {/* Expenses list */}
+                {expenses.length === 0 && !addingExpense ? (
+                  <p className="text-sm font-polin-light text-muted-foreground">לא נרשמו הוצאות לרכב זה</p>
+                ) : (
+                  <div className="space-y-2">
+                    {expenses.map((exp) => (
+                      <div key={exp.id} className="flex items-center justify-between rounded-xl border bg-muted/20 px-4 py-3">
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs font-polin-light text-muted-foreground min-w-[80px]" dir="ltr">
+                            {exp.expense_date}
+                          </span>
+                          <span className="font-polin-medium text-foreground text-sm">
+                            ₪{Number(exp.amount).toLocaleString()}
+                          </span>
+                          <span className="text-sm font-polin-light text-muted-foreground">{exp.description}</span>
+                        </div>
+                        {isAdmin && (
+                          <button type="button"
+                            onClick={() => deleteExpenseMutation.mutate(exp.id)}
+                            className="p-1.5 rounded-md text-destructive hover:bg-destructive/10 transition-colors">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ── Additional ── */}
           <Section title="מידע נוסף" icon={Info}>
