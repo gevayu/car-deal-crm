@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { Car } from "lucide-react";
 
-// Map Hebrew/common manufacturer names to their slug for the logo API
-const MANUFACTURER_SLUG_MAP: Record<string, string> = {
-  // Hebrew names
+// Base URL for car logos dataset (open-source, 387+ logos)
+const LOGOS_BASE =
+  "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/optimized";
+
+// Hebrew + English manufacturer names → dataset slug
+const SLUG: Record<string, string> = {
+  // Hebrew
   "טויוטה": "toyota",
   "הונדה": "honda",
   "מזדה": "mazda",
@@ -16,11 +20,11 @@ const MANUFACTURER_SLUG_MAP: Record<string, string> = {
   "מרצדס": "mercedes-benz",
   "מרצדס בנץ": "mercedes-benz",
   "ב.מ.וו": "bmw",
-  "bmw": "bmw",
   "אאודי": "audi",
   "פולקסווגן": "volkswagen",
   "סקודה": "skoda",
   "סיאט": "seat",
+  "קופרה": "cupra",
   "פורד": "ford",
   "אופל": "opel",
   "פיג'ו": "peugeot",
@@ -33,7 +37,6 @@ const MANUFACTURER_SLUG_MAP: Record<string, string> = {
   "אינפיניטי": "infiniti",
   "אקורה": "acura",
   "ג'יפ": "jeep",
-  "ג'י.פי": "jeep",
   "שברולט": "chevrolet",
   "דודג'": "dodge",
   "קרייזלר": "chrysler",
@@ -48,13 +51,18 @@ const MANUFACTURER_SLUG_MAP: Record<string, string> = {
   "טסלה": "tesla",
   "פולסטאר": "polestar",
   "בי.וואי.די": "byd",
-  "byd": "byd",
-  "לינק אנד קו": "lynk-co",
-  "סאיק": "saic",
-  "גרייט וול": "great-wall",
   "צ'רי": "chery",
-  "מוביס": "mobis",
-  // English names (lowercase)
+  "סאנגיונג": "ssangyong",
+  "סאנג יונג": "ssangyong",
+  "דאצ'יה": "dacia",
+  "מזראטי": "maserati",
+  "פרארי": "ferrari",
+  "למבורגיני": "lamborghini",
+  "בנטלי": "bentley",
+  "רולס רויס": "rolls-royce",
+  "אסטון מרטין": "aston-martin",
+  "ג'נסיס": "genesis",
+  // English (lowercase)
   "toyota": "toyota",
   "honda": "honda",
   "mazda": "mazda",
@@ -66,11 +74,13 @@ const MANUFACTURER_SLUG_MAP: Record<string, string> = {
   "suzuki": "suzuki",
   "mercedes": "mercedes-benz",
   "mercedes-benz": "mercedes-benz",
+  "bmw": "bmw",
   "audi": "audi",
   "volkswagen": "volkswagen",
   "vw": "volkswagen",
   "skoda": "skoda",
   "seat": "seat",
+  "cupra": "cupra",
   "ford": "ford",
   "opel": "opel",
   "peugeot": "peugeot",
@@ -78,6 +88,7 @@ const MANUFACTURER_SLUG_MAP: Record<string, string> = {
   "renault": "renault",
   "fiat": "fiat",
   "alfa romeo": "alfa-romeo",
+  "alfa-romeo": "alfa-romeo",
   "volvo": "volvo",
   "lexus": "lexus",
   "infiniti": "infiniti",
@@ -91,16 +102,35 @@ const MANUFACTURER_SLUG_MAP: Record<string, string> = {
   "buick": "buick",
   "porsche": "porsche",
   "land rover": "land-rover",
-  "landrover": "land-rover",
+  "land-rover": "land-rover",
   "jaguar": "jaguar",
   "mini": "mini",
   "tesla": "tesla",
   "polestar": "polestar",
+  "byd": "byd",
+  "chery": "chery",
+  "dacia": "dacia",
+  "ssangyong": "ssangyong",
+  "maserati": "maserati",
+  "ferrari": "ferrari",
+  "lamborghini": "lamborghini",
+  "bentley": "bentley",
+  "rolls-royce": "rolls-royce",
+  "rolls royce": "rolls-royce",
+  "aston martin": "aston-martin",
+  "aston-martin": "aston-martin",
+  "genesis": "genesis",
+  "isuzu": "isuzu",
+  "ram": "ram",
+  "gmc": "gmc",
+  "saab": "saab",
+  "smart": "smart",
+  "rivian": "rivian",
+  "lucid": "lucid",
 };
 
 function getSlug(manufacturer: string): string | null {
-  const key = manufacturer.trim().toLowerCase();
-  return MANUFACTURER_SLUG_MAP[key] ?? MANUFACTURER_SLUG_MAP[manufacturer.trim()] ?? null;
+  return SLUG[manufacturer.trim()] ?? SLUG[manufacturer.trim().toLowerCase()] ?? null;
 }
 
 interface ManufacturerLogoProps {
@@ -111,7 +141,7 @@ interface ManufacturerLogoProps {
 export default function ManufacturerLogo({ manufacturer, size = 32 }: ManufacturerLogoProps) {
   const [failed, setFailed] = useState(false);
 
-  if (!manufacturer || failed) {
+  if (!manufacturer) {
     return (
       <div
         className="rounded-full bg-muted flex items-center justify-center flex-shrink-0"
@@ -123,13 +153,17 @@ export default function ManufacturerLogo({ manufacturer, size = 32 }: Manufactur
   }
 
   const slug = getSlug(manufacturer);
-  if (!slug) {
+
+  if (!slug || failed) {
     return (
       <div
-        className="rounded-full bg-muted/60 border border-border/40 flex items-center justify-center flex-shrink-0 overflow-hidden"
+        className="rounded-full bg-muted/60 border border-border/40 flex items-center justify-center flex-shrink-0"
         style={{ width: size, height: size }}
       >
-        <span className="text-muted-foreground font-polin-medium" style={{ fontSize: size * 0.35 }}>
+        <span
+          className="text-muted-foreground font-polin-medium select-none"
+          style={{ fontSize: size * 0.38 }}
+        >
           {manufacturer.charAt(0).toUpperCase()}
         </span>
       </div>
@@ -138,15 +172,15 @@ export default function ManufacturerLogo({ manufacturer, size = 32 }: Manufactur
 
   return (
     <div
-      className="rounded-full bg-white border border-border/30 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm"
-      style={{ width: size, height: size, padding: size * 0.1 }}
+      className="rounded-full bg-white border border-border/20 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm"
+      style={{ width: size, height: size }}
     >
       <img
-        src={`https://logo.clearbit.com/${slug}.com`}
+        src={`${LOGOS_BASE}/${slug}.png`}
         alt={manufacturer}
         onError={() => setFailed(true)}
-        className="object-contain w-full h-full"
-        style={{ width: size * 0.75, height: size * 0.75 }}
+        className="object-contain"
+        style={{ width: size * 0.78, height: size * 0.78 }}
       />
     </div>
   );
