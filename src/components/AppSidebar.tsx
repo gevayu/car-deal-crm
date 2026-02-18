@@ -42,12 +42,12 @@ export function AppSidebar() {
         <div className="flex items-center justify-between">
           {!collapsed && (
             <div className="flex items-center gap-2 animate-fade-in">
-              <img src={logoImg} alt="לוגו" className="h-10 w-auto object-contain" />
+              <img src={logoImg} alt="לוגו" className="h-16 w-auto object-contain" />
             </div>
           )}
           {collapsed && (
             <div className="flex items-center justify-center mx-auto">
-              <img src={logoImg} alt="לוגו" className="h-8 w-auto object-contain" />
+              <img src={logoImg} alt="לוגו" className="h-10 w-auto object-contain" />
             </div>
           )}
           <SidebarTrigger className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent ml-auto">
