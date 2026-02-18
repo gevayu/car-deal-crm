@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Save, Upload, Images } from "lucide-react";
+import { ArrowRight, Save, Upload, Images, ClipboardCheck, ExternalLink, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import VehicleGallery from "@/components/VehicleGallery";
@@ -39,7 +39,10 @@ export default function VehicleDetail() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<Record<string, any>>(emptyVehicle);
   const [photos, setPhotos] = useState<string[]>([]);
-  const [documents, setDocuments] = useState<string[]>([]);
+  const [documents, setDocuments] = useState<{ name: string; url: string; path: string }[]>([]);
+  const [inspectionFile, setInspectionFile] = useState<{ name: string; url: string; path: string } | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [uploadingInspection, setUploadingInspection] = useState(false);
   
 
   const { data: vehicle, isLoading } = useQuery({
@@ -57,7 +60,7 @@ export default function VehicleDetail() {
     if (vehicle) setForm(vehicle);
   }, [vehicle]);
 
-  // Load photos & docs
+  // Load photos, docs & inspection
   useEffect(() => {
     if (isNew || !id) return;
     const loadFiles = async () => {
@@ -67,7 +70,18 @@ export default function VehicleDetail() {
       }
       const { data: docFiles } = await supabase.storage.from("vehicle-documents").list(id);
       if (docFiles) {
-        setDocuments(docFiles.map(f => f.name));
+        const generalFiles = docFiles.filter(f => !f.name.startsWith("inspection_"));
+        const inspectionItem = docFiles.find(f => f.name.startsWith("inspection_"));
+        // Get signed URLs for documents
+        const docsWithUrls = await Promise.all(generalFiles.map(async (f) => {
+          const { data } = await supabase.storage.from("vehicle-documents").createSignedUrl(`${id}/${f.name}`, 3600);
+          return { name: f.name, url: data?.signedUrl ?? "", path: `${id}/${f.name}` };
+        }));
+        setDocuments(docsWithUrls);
+        if (inspectionItem) {
+          const { data } = await supabase.storage.from("vehicle-documents").createSignedUrl(`${id}/${inspectionItem.name}`, 3600);
+          setInspectionFile({ name: inspectionItem.name, url: data?.signedUrl ?? "", path: `${id}/${inspectionItem.name}` });
+        }
       }
     };
     loadFiles();
@@ -252,33 +266,147 @@ export default function VehicleDetail() {
             </Card>
           )}
 
+          {/* Inspection File */}
+          {!isNew && (
+            <Card className="border-accent/30">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ClipboardCheck className="h-5 w-5 text-accent" />
+                  בדיקת רכב
+                  {inspectionFile && (
+                    <Badge variant="outline" className="font-polin-light text-xs text-green-700 border-green-300">קובץ מצורף</Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {inspectionFile ? (
+                  <div className="flex items-center justify-between rounded-xl border bg-muted/40 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center">
+                        <ClipboardCheck className="h-5 w-5 text-accent" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-polin-medium text-foreground truncate max-w-[240px]">
+                          {inspectionFile.name.replace(/^inspection_\d+_/, "")}
+                        </p>
+                        <p className="text-xs font-polin-light text-muted-foreground">קובץ בדיקת רכב</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {inspectionFile.url && (
+                        <a
+                          href={inspectionFile.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs font-polin-medium text-primary hover:text-accent transition-colors px-3 py-1.5 rounded-lg border hover:border-accent/50"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          פתח
+                        </a>
+                      )}
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const { error } = await supabase.storage.from("vehicle-documents").remove([inspectionFile.path]);
+                            if (!error) setInspectionFile(null);
+                          }}
+                          className="flex items-center gap-1.5 text-xs font-polin-light text-destructive hover:text-destructive/80 transition-colors px-3 py-1.5 rounded-lg border border-destructive/20 hover:border-destructive/40"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          מחק
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm font-polin-light text-muted-foreground">לא צורף קובץ בדיקה לרכב זה</p>
+                )}
+                {isAdmin && (
+                  <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm font-polin-medium transition-colors ${
+                    uploadingInspection
+                      ? "bg-muted text-muted-foreground cursor-not-allowed"
+                      : "bg-accent/10 border-accent/30 text-accent-foreground hover:bg-accent/20"
+                  }`}>
+                    <Upload className="h-4 w-4" />
+                    {uploadingInspection ? "מעלה..." : inspectionFile ? "החלף קובץ בדיקה" : "העלה קובץ בדיקה"}
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      className="hidden"
+                      disabled={uploadingInspection}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setUploadingInspection(true);
+                        if (inspectionFile) {
+                          await supabase.storage.from("vehicle-documents").remove([inspectionFile.path]);
+                        }
+                        const path = `${id}/inspection_${Date.now()}_${file.name}`;
+                        const { error } = await supabase.storage.from("vehicle-documents").upload(path, file);
+                        setUploadingInspection(false);
+                        if (error) return;
+                        const { data: signed } = await supabase.storage.from("vehicle-documents").createSignedUrl(path, 3600);
+                        setInspectionFile({ name: `inspection_${Date.now()}_${file.name}`, url: signed?.signedUrl ?? "", path });
+                      }}
+                    />
+                  </label>
+                )}
+                <p className="text-xs font-polin-light text-muted-foreground">פורמטים מקובלים: PDF, Word, תמונה</p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Documents */}
           {!isNew && (
             <Card>
-              <CardHeader><CardTitle className="text-lg">מסמכים</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-lg">מסמכים נוספים</CardTitle></CardHeader>
               <CardContent>
                 <div className="mb-4 space-y-2">
-                  {documents.map((name, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <span>📄</span>
-                      <span className="font-polin-light">{name}</span>
+                  {documents.map((doc, i) => (
+                    <div key={i} className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span>📄</span>
+                        <span className="font-polin-light">{doc.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {doc.url && (
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                            className="text-xs font-polin-light text-primary hover:text-accent flex items-center gap-1">
+                            <ExternalLink className="h-3 w-3" /> פתח
+                          </a>
+                        )}
+                        {isAdmin && (
+                          <button type="button" onClick={async () => {
+                            await supabase.storage.from("vehicle-documents").remove([doc.path]);
+                            setDocuments(prev => prev.filter((_, j) => j !== i));
+                          }} className="text-destructive hover:text-destructive/70">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
-                  {documents.length === 0 && <p className="text-sm text-muted-foreground font-polin-light">אין מסמכים</p>}
+                  {documents.length === 0 && <p className="text-sm text-muted-foreground font-polin-light">אין מסמכים נוספים</p>}
                 </div>
                 {isAdmin && (
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border bg-background px-4 py-2 text-sm hover:bg-muted font-polin-light">
                     <Upload className="h-4 w-4" />
-                    העלאת מסמך
+                    {uploadingDoc ? "מעלה..." : "העלאת מסמך"}
                     <input
                       type="file"
                       className="hidden"
+                      disabled={uploadingDoc}
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
+                        setUploadingDoc(true);
                         const path = `${id}/${Date.now()}_${file.name}`;
                         const { error } = await supabase.storage.from("vehicle-documents").upload(path, file);
-                        if (!error) setDocuments(prev => [...prev, file.name]);
+                        setUploadingDoc(false);
+                        if (error) return;
+                        const { data: signed } = await supabase.storage.from("vehicle-documents").createSignedUrl(path, 3600);
+                        setDocuments(prev => [...prev, { name: file.name, url: signed?.signedUrl ?? "", path }]);
                       }}
                     />
                   </label>
