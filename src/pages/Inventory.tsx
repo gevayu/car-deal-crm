@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Trash2, Car, Eye, Download, SlidersHorizontal, X } from "lucide-react";
+import { Plus, Search, Trash2, Car, Eye, Download, SlidersHorizontal, X, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import ManufacturerLogo from "@/components/ManufacturerLogo";
@@ -75,6 +75,36 @@ export default function Inventory() {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const SortIcon = ({ col }: { col: string }) => {
+    if (sortKey !== col) return <ChevronsUpDown className="h-3 w-3 opacity-40 inline-block mr-1" />;
+    return sortDir === "asc"
+      ? <ChevronUp className="h-3 w-3 inline-block mr-1 text-accent" />
+      : <ChevronDown className="h-3 w-3 inline-block mr-1 text-accent" />;
+  };
+
+  const SortHead = ({ col, children }: { col: string; children: React.ReactNode }) => (
+    <TableHead
+      className="text-right font-polin-medium cursor-pointer select-none hover:bg-muted/80 transition-colors"
+      onClick={() => handleSort(col)}
+    >
+      <span className="flex items-center justify-end gap-0.5">
+        {children}
+        <SortIcon col={col} />
+      </span>
+    </TableHead>
+  );
 
   const set = (key: keyof Filters) => (val: string) =>
     setFilters((f) => ({ ...f, [key]: val }));
@@ -122,7 +152,7 @@ export default function Inventory() {
   });
 
   const filtered = useMemo(() => {
-    return vehicles.filter((v) => {
+    const result = vehicles.filter((v) => {
       if (filters.search && !v.license_plate?.includes(filters.search) &&
           !v.manufacturer?.includes(filters.search) && !v.model?.includes(filters.search))
         return false;
@@ -135,7 +165,23 @@ export default function Inventory() {
       if (filters.maxPrice && (v.asking_price ?? 0) > Number(filters.maxPrice)) return false;
       return true;
     });
-  }, [vehicles, filters]);
+
+    if (sortKey) {
+      result.sort((a, b) => {
+        const aVal = (a as any)[sortKey] ?? (typeof (a as any)[sortKey] === "number" ? 0 : "");
+        const bVal = (b as any)[sortKey] ?? (typeof (b as any)[sortKey] === "number" ? 0 : "");
+        let cmp = 0;
+        if (typeof aVal === "number" && typeof bVal === "number") {
+          cmp = aVal - bVal;
+        } else {
+          cmp = String(aVal).localeCompare(String(bVal), "he");
+        }
+        return sortDir === "asc" ? cmp : -cmp;
+      });
+    }
+
+    return result;
+  }, [vehicles, filters, sortKey, sortDir]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -446,13 +492,13 @@ export default function Inventory() {
                 <TableRow className="bg-muted/50">
                   <TableHead className="text-right font-polin-medium">יצרן ודגם</TableHead>
                   <TableHead className="text-right font-polin-medium">מס׳ רישוי</TableHead>
-                  <TableHead className="text-right font-polin-medium">צבע</TableHead>
-                  <TableHead className="text-right font-polin-medium">שנה</TableHead>
-                  <TableHead className="text-right font-polin-medium">כ"ס</TableHead>
-                  <TableHead className="text-right font-polin-medium">יד</TableHead>
-                  <TableHead className="text-right font-polin-medium">ק"מ</TableHead>
-                  <TableHead className="text-right font-polin-medium">מחיר מחירון</TableHead>
-                  <TableHead className="text-right font-polin-medium">מחיר מבוקש</TableHead>
+                  <SortHead col="color">צבע</SortHead>
+                  <SortHead col="year">שנה</SortHead>
+                  <SortHead col="horsepower">כ"ס</SortHead>
+                  <SortHead col="hand">יד</SortHead>
+                  <SortHead col="odometer">ק"מ</SortHead>
+                  <SortHead col="list_price">מחיר מחירון</SortHead>
+                  <SortHead col="asking_price">מחיר מבוקש</SortHead>
                   <TableHead className="text-right font-polin-medium">סוג רכב</TableHead>
                   <TableHead className="text-right font-polin-medium">סוג מנוע</TableHead>
                   <TableHead className="text-right font-polin-medium">סטטוס</TableHead>
