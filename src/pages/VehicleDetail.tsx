@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Save, Upload, Images, ClipboardCheck, ExternalLink, Trash2 } from "lucide-react";
+import { ArrowRight, Save, Upload, Images, ClipboardCheck, ExternalLink, Trash2, Car, LogOut, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import VehicleGallery from "@/components/VehicleGallery";
@@ -116,46 +116,103 @@ export default function VehicleDetail() {
   const set = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }));
 
   const Field = ({ label, name, type = "text" }: { label: string; name: string; type?: string }) => (
-    <div className="space-y-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+    <div className="space-y-1.5">
+      <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">{label}</Label>
       <Input
         type={type}
         value={form[name] ?? ""}
         onChange={(e) => set(name, type === "number" ? (e.target.value ? Number(e.target.value) : undefined) : e.target.value)}
         disabled={!isAdmin}
+        className="font-polin-light h-10"
       />
     </div>
   );
 
-  if (isLoading) return <div dir="rtl" className="flex min-h-screen items-center justify-center">טוען...</div>;
+  const Section = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => (
+    <div className="bg-card rounded-2xl border shadow-card overflow-hidden">
+      <div className="flex items-center gap-3 px-6 py-4 border-b bg-muted/30">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <Icon className="h-4 w-4 text-primary" />
+        </div>
+        <h2 className="font-polin-medium text-foreground">{title}</h2>
+      </div>
+      <div className="p-6">{children}</div>
+    </div>
+  );
+
+  const STATUS_COLORS: Record<string, string> = {
+    available: "bg-green-100 text-green-700 border border-green-200",
+    sold: "bg-red-100 text-red-700 border border-red-200",
+    reserved: "bg-amber-100 text-amber-700 border border-amber-200",
+    in_treatment: "bg-blue-100 text-blue-700 border border-blue-200",
+  };
+  const STATUS_LABELS: Record<string, string> = {
+    available: "זמין", sold: "נמכר", reserved: "שמור", in_treatment: "בטיפול",
+  };
+
+  if (isLoading) return (
+    <div dir="rtl" className="flex min-h-screen items-center justify-center bg-background">
+      <div className="text-center space-y-3">
+        <div className="w-12 h-12 rounded-full bg-gradient-gold mx-auto flex items-center justify-center animate-pulse">
+          <Car className="h-6 w-6 text-primary" />
+        </div>
+        <p className="font-polin-light text-muted-foreground">טוען כרטיס רכב...</p>
+      </div>
+    </div>
+  );
 
   return (
-    <div dir="rtl" className="min-h-screen bg-background p-4 md:p-6">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-6 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-            <ArrowRight className="h-5 w-5" />
-          </Button>
-          <h1 className="text-2xl font-bold">{isNew ? "הוספת רכב חדש" : `כרטיס רכב — ${form.manufacturer || ""} ${form.model || ""}`}</h1>
-        </div>
+    <div dir="rtl" className="min-h-screen bg-background">
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Identification */}
-          <Card>
-            <CardHeader><CardTitle className="text-lg">פרטי זיהוי</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+      {/* ── Header ── */}
+      <header className="border-b bg-primary shadow-elevated sticky top-0 z-20">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => navigate("/")}
+              className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+              <ArrowRight className="h-4 w-4 text-primary-foreground" />
+            </button>
+            <div>
+              <h1 className="text-lg font-polin-medium text-primary-foreground leading-tight">
+                {isNew ? "הוספת רכב חדש" : [form.manufacturer, form.model].filter(Boolean).join(" ") || "כרטיס רכב"}
+              </h1>
+              {!isNew && form.license_plate && (
+                <p className="text-xs font-polin-light text-primary-foreground/60">{form.license_plate}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {!isNew && form.status && (
+              <span className={`inline-block rounded-full px-3 py-1 text-xs font-polin-medium ${STATUS_COLORS[form.status] ?? ""}`}>
+                {STATUS_LABELS[form.status] ?? form.status}
+              </span>
+            )}
+            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}
+              className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-white/10 font-polin-light gap-1.5">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">דשבורד</span>
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <form onSubmit={handleSubmit}>
+        <div className="mx-auto max-w-5xl px-4 md:px-6 py-8 space-y-6 animate-fade-in">
+
+          {/* ── Identification ── */}
+          <Section title="פרטי זיהוי" icon={Car}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               <Field label="מספר רישוי" name="license_plate" />
               <Field label="מספר שלדה" name="chassis_number" />
               <Field label="קוד דגם" name="model_code" />
               <Field label="מספר מנוע" name="engine_number" />
               <Field label="קוד" name="code" />
-            </CardContent>
-          </Card>
+            </div>
+          </Section>
 
-          {/* Specs */}
-          <Card>
-            <CardHeader><CardTitle className="text-lg">מאפייני רכב</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+          {/* ── Specs ── */}
+          <Section title="מאפייני רכב" icon={Car}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               <Field label="יצרן" name="manufacturer" />
               <Field label="דגם" name="model" />
               <Field label="רמת גימור" name="trim_level" />
@@ -167,50 +224,53 @@ export default function VehicleDetail() {
               <Field label="צבע" name="color" />
               <Field label="מקומות ישיבה" name="seats" type="number" />
               <Field label="מספר דלתות" name="doors" type="number" />
-            </CardContent>
-          </Card>
+            </div>
+          </Section>
 
-          {/* Condition */}
-          <Card>
-            <CardHeader><CardTitle className="text-lg">מצב הרכב</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+          {/* ── Condition ── */}
+          <Section title="מצב הרכב" icon={Car}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               <Field label="יד" name="hand" type="number" />
-              <Field label="מד אוץ (ק״מ)" name="odometer" type="number" />
+              <Field label='מד אוץ (ק"מ)' name="odometer" type="number" />
               <Field label="טסט" name="test_date" type="date" />
               <Field label="אגרת רישוי" name="registration_fee" type="number" />
-              <div className="flex items-center gap-2 pt-6">
-                <Checkbox checked={form.is_original ?? true} onCheckedChange={(c) => set("is_original", c)} disabled={!isAdmin} id="original" />
-                <Label htmlFor="original">מקורי</Label>
+              <div className="flex flex-col gap-3 pt-1">
+                {[
+                  { id: "original", key: "is_original", label: "מקורי", default: true },
+                  { id: "route", key: "needs_route", label: "צריך מסלול", default: false },
+                  { id: "pledged", key: "is_pledged", label: "משועבד", default: false },
+                ].map(cb => (
+                  <label key={cb.id} className="flex items-center gap-2.5 cursor-pointer group">
+                    <Checkbox
+                      id={cb.id}
+                      checked={form[cb.key] ?? cb.default}
+                      onCheckedChange={(c) => set(cb.key, c)}
+                      disabled={!isAdmin}
+                    />
+                    <span className="text-sm font-polin-light text-foreground group-hover:text-primary transition-colors">{cb.label}</span>
+                  </label>
+                ))}
               </div>
-              <div className="flex items-center gap-2 pt-6">
-                <Checkbox checked={form.needs_route ?? false} onCheckedChange={(c) => set("needs_route", c)} disabled={!isAdmin} id="route" />
-                <Label htmlFor="route">צריך מסלול</Label>
-              </div>
-              <div className="flex items-center gap-2 pt-6">
-                <Checkbox checked={form.is_pledged ?? false} onCheckedChange={(c) => set("is_pledged", c)} disabled={!isAdmin} id="pledged" />
-                <Label htmlFor="pledged">משועבד</Label>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </Section>
 
-          {/* Deal */}
-          <Card>
-            <CardHeader><CardTitle className="text-lg">פרטי עסקה</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">סוג עסקה</Label>
+          {/* ── Deal ── */}
+          <Section title="פרטי עסקה" icon={Save}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">סוג עסקה</Label>
                 <Select value={form.deal_type || "regular_sale"} onValueChange={(v) => set("deal_type", v)} disabled={!isAdmin}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-10 font-polin-light"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="regular_sale">מכירה רגילה</SelectItem>
                     <SelectItem value="brokerage">תיווך</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">סטטוס</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">סטטוס</Label>
                 <Select value={form.status || "available"} onValueChange={(v) => set("status", v)} disabled={!isAdmin}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-10 font-polin-light"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="available">זמין</SelectItem>
                     <SelectItem value="sold">נמכר</SelectItem>
@@ -224,61 +284,75 @@ export default function VehicleDetail() {
               <Field label="מחיר מבוקש" name="asking_price" type="number" />
               <Field label="מחיר קניה" name="purchase_price" type="number" />
               <Field label="הוצאות" name="expenses" type="number" />
-            </CardContent>
-          </Card>
+            </div>
+            {/* Price summary bar */}
+            {(form.asking_price || form.purchase_price) && (
+              <div className="mt-5 grid grid-cols-3 gap-3">
+                {[
+                  { label: "מחיר מבוקש", val: form.asking_price, highlight: true },
+                  { label: "מחיר קניה", val: form.purchase_price, highlight: false },
+                  { label: "רווח גולמי", val: (form.asking_price ?? 0) - (form.purchase_price ?? 0) - (form.expenses ?? 0), highlight: false },
+                ].map(p => p.val != null && (
+                  <div key={p.label} className={`rounded-xl p-3 text-center ${p.highlight ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                    <p className={`text-xs font-polin-light mb-0.5 ${p.highlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{p.label}</p>
+                    <p className={`text-base font-polin-medium ${p.highlight ? "text-accent" : "text-foreground"}`}>
+                      ₪{Number(p.val).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
 
-          {/* Additional */}
-          <Card>
-            <CardHeader><CardTitle className="text-lg">מידע נוסף</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+          {/* ── Additional ── */}
+          <Section title="מידע נוסף" icon={Car}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               <Field label="סניף" name="branch" />
               <Field label="תאריך כניסה למלאי" name="entry_date" type="date" />
               <Field label="איש מכירות" name="salesperson" />
-              <div className="col-span-full space-y-1">
-                <Label className="text-xs text-muted-foreground">הערות</Label>
-                <Textarea value={form.notes ?? ""} onChange={(e) => set("notes", e.target.value)} disabled={!isAdmin} rows={3} />
+              <div className="col-span-full space-y-1.5">
+                <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">הערות</Label>
+                <Textarea value={form.notes ?? ""} onChange={(e) => set("notes", e.target.value)}
+                  disabled={!isAdmin} rows={3} className="font-polin-light resize-none" />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </Section>
 
-          {/* Photos Gallery */}
+          {/* ── Gallery ── */}
           {!isNew && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Images className="h-5 w-5 text-accent" />
-                  גלריית תמונות
-                  {photos.length > 0 && (
-                    <Badge className="bg-accent/15 text-accent-foreground border-0 font-polin-light text-xs">
-                      {photos.length} תמונות
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <VehicleGallery
-                  vehicleId={id!}
-                  photos={photos}
-                  onPhotosChange={setPhotos}
-                  isAdmin={isAdmin}
-                />
-              </CardContent>
-            </Card>
+            <div className="bg-card rounded-2xl border shadow-card overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center">
+                    <Images className="h-4 w-4 text-accent" />
+                  </div>
+                  <h2 className="font-polin-medium text-foreground">גלריית תמונות</h2>
+                </div>
+                {photos.length > 0 && (
+                  <Badge className="bg-accent/15 text-accent-foreground border-0 font-polin-light text-xs">
+                    {photos.length} תמונות
+                  </Badge>
+                )}
+              </div>
+              <div className="p-6">
+                <VehicleGallery vehicleId={id!} photos={photos} onPhotosChange={setPhotos} isAdmin={isAdmin} />
+              </div>
+            </div>
           )}
 
-          {/* Inspection File */}
+          {/* ── Inspection ── */}
           {!isNew && (
-            <Card className="border-accent/30">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <ClipboardCheck className="h-5 w-5 text-accent" />
-                  בדיקת רכב
-                  {inspectionFile && (
-                    <Badge variant="outline" className="font-polin-light text-xs text-green-700 border-green-300">קובץ מצורף</Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div className="bg-card rounded-2xl border border-accent/25 shadow-card overflow-hidden">
+              <div className="flex items-center gap-3 px-6 py-4 border-b bg-accent/5">
+                <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center">
+                  <ClipboardCheck className="h-4 w-4 text-accent" />
+                </div>
+                <h2 className="font-polin-medium text-foreground">בדיקת רכב</h2>
+                {inspectionFile && (
+                  <Badge variant="outline" className="font-polin-light text-xs border-green-300 text-green-700 mr-auto">קובץ מצורף ✓</Badge>
+                )}
+              </div>
+              <div className="p-6 space-y-4">
                 {inspectionFile ? (
                   <div className="flex items-center justify-between rounded-xl border bg-muted/40 px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -294,27 +368,19 @@ export default function VehicleDetail() {
                     </div>
                     <div className="flex items-center gap-2">
                       {inspectionFile.url && (
-                        <a
-                          href={inspectionFile.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 text-xs font-polin-medium text-primary hover:text-accent transition-colors px-3 py-1.5 rounded-lg border hover:border-accent/50"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          פתח
+                        <a href={inspectionFile.url} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs font-polin-medium text-primary hover:text-accent transition-colors px-3 py-1.5 rounded-lg border hover:border-accent/50">
+                          <ExternalLink className="h-3.5 w-3.5" />פתח
                         </a>
                       )}
                       {isAdmin && (
-                        <button
-                          type="button"
+                        <button type="button"
                           onClick={async () => {
                             const { error } = await supabase.storage.from("vehicle-documents").remove([inspectionFile.path]);
                             if (!error) setInspectionFile(null);
                           }}
-                          className="flex items-center gap-1.5 text-xs font-polin-light text-destructive hover:text-destructive/80 transition-colors px-3 py-1.5 rounded-lg border border-destructive/20 hover:border-destructive/40"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          מחק
+                          className="flex items-center gap-1.5 text-xs font-polin-light text-destructive hover:text-destructive/80 transition-colors px-3 py-1.5 rounded-lg border border-destructive/20 hover:border-destructive/40">
+                          <Trash2 className="h-3.5 w-3.5" />מחק
                         </button>
                       )}
                     </div>
@@ -324,79 +390,76 @@ export default function VehicleDetail() {
                 )}
                 {isAdmin && (
                   <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm font-polin-medium transition-colors ${
-                    uploadingInspection
-                      ? "bg-muted text-muted-foreground cursor-not-allowed"
-                      : "bg-accent/10 border-accent/30 text-accent-foreground hover:bg-accent/20"
-                  }`}>
+                    uploadingInspection ? "bg-muted text-muted-foreground cursor-not-allowed"
+                      : "bg-accent/10 border-accent/30 text-accent-foreground hover:bg-accent/20"}`}>
                     <Upload className="h-4 w-4" />
                     {uploadingInspection ? "מעלה..." : inspectionFile ? "החלף קובץ בדיקה" : "העלה קובץ בדיקה"}
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      className="hidden"
+                    <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" className="hidden"
                       disabled={uploadingInspection}
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         setUploadingInspection(true);
-                        if (inspectionFile) {
-                          await supabase.storage.from("vehicle-documents").remove([inspectionFile.path]);
-                        }
+                        if (inspectionFile) await supabase.storage.from("vehicle-documents").remove([inspectionFile.path]);
                         const path = `${id}/inspection_${Date.now()}_${file.name}`;
                         const { error } = await supabase.storage.from("vehicle-documents").upload(path, file);
                         setUploadingInspection(false);
                         if (error) return;
                         const { data: signed } = await supabase.storage.from("vehicle-documents").createSignedUrl(path, 3600);
                         setInspectionFile({ name: `inspection_${Date.now()}_${file.name}`, url: signed?.signedUrl ?? "", path });
-                      }}
-                    />
+                      }} />
                   </label>
                 )}
                 <p className="text-xs font-polin-light text-muted-foreground">פורמטים מקובלים: PDF, Word, תמונה</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
-          {/* Documents */}
+          {/* ── Documents ── */}
           {!isNew && (
-            <Card>
-              <CardHeader><CardTitle className="text-lg">מסמכים נוספים</CardTitle></CardHeader>
-              <CardContent>
-                <div className="mb-4 space-y-2">
-                  {documents.map((doc, i) => (
-                    <div key={i} className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <span>📄</span>
-                        <span className="font-polin-light">{doc.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {doc.url && (
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer"
-                            className="text-xs font-polin-light text-primary hover:text-accent flex items-center gap-1">
-                            <ExternalLink className="h-3 w-3" /> פתח
-                          </a>
-                        )}
-                        {isAdmin && (
-                          <button type="button" onClick={async () => {
-                            await supabase.storage.from("vehicle-documents").remove([doc.path]);
-                            setDocuments(prev => prev.filter((_, j) => j !== i));
-                          }} className="text-destructive hover:text-destructive/70">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {documents.length === 0 && <p className="text-sm text-muted-foreground font-polin-light">אין מסמכים נוספים</p>}
+            <div className="bg-card rounded-2xl border shadow-card overflow-hidden">
+              <div className="flex items-center gap-3 px-6 py-4 border-b bg-muted/30">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <ExternalLink className="h-4 w-4 text-primary" />
                 </div>
+                <h2 className="font-polin-medium text-foreground">מסמכים נוספים</h2>
+              </div>
+              <div className="p-6 space-y-3">
+                {documents.length === 0 ? (
+                  <p className="text-sm text-muted-foreground font-polin-light">אין מסמכים נוספים</p>
+                ) : (
+                  <div className="space-y-2">
+                    {documents.map((doc, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-xl border bg-muted/30 px-4 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-base">📄</span>
+                          <span className="text-sm font-polin-light text-foreground">{doc.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {doc.url && (
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                              className="text-xs font-polin-medium text-primary hover:text-accent transition-colors flex items-center gap-1 px-2 py-1 rounded-md border hover:border-accent/40">
+                              <ExternalLink className="h-3 w-3" />פתח
+                            </a>
+                          )}
+                          {isAdmin && (
+                            <button type="button" onClick={async () => {
+                              await supabase.storage.from("vehicle-documents").remove([doc.path]);
+                              setDocuments(prev => prev.filter((_, j) => j !== i));
+                            }} className="p-1.5 rounded-md text-destructive hover:bg-destructive/10 transition-colors">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {isAdmin && (
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border bg-background px-4 py-2 text-sm hover:bg-muted font-polin-light">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-polin-light hover:bg-muted transition-colors mt-1">
                     <Upload className="h-4 w-4" />
                     {uploadingDoc ? "מעלה..." : "העלאת מסמך"}
-                    <input
-                      type="file"
-                      className="hidden"
-                      disabled={uploadingDoc}
+                    <input type="file" className="hidden" disabled={uploadingDoc}
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
@@ -407,24 +470,33 @@ export default function VehicleDetail() {
                         if (error) return;
                         const { data: signed } = await supabase.storage.from("vehicle-documents").createSignedUrl(path, 3600);
                         setDocuments(prev => [...prev, { name: file.name, url: signed?.signedUrl ?? "", path }]);
-                      }}
-                    />
+                      }} />
                   </label>
                 )}
-              </CardContent>
-            </Card>
-          )}
-
-          {isAdmin && (
-            <div className="flex justify-end">
-              <Button type="submit" size="lg" disabled={saveMutation.isPending}>
-                <Save className="ml-2 h-4 w-4" />
-                {saveMutation.isPending ? "שומר..." : "שמירה"}
-              </Button>
+              </div>
             </div>
           )}
-        </form>
-      </div>
+
+          {/* bottom padding for sticky bar */}
+          <div className="h-4" />
+        </div>
+
+        {/* ── Sticky Save Bar ── */}
+        {isAdmin && (
+          <div className="fixed bottom-0 inset-x-0 z-30 border-t bg-card/95 backdrop-blur-sm shadow-elevated">
+            <div className="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between">
+              <p className="text-xs font-polin-light text-muted-foreground">
+                {isNew ? "מלא את הפרטים ולחץ שמירה להוספת הרכב" : "שנה פרטים ולחץ שמירה לעדכון"}
+              </p>
+              <Button type="submit" disabled={saveMutation.isPending}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-polin-medium gap-2 px-6">
+                <Save className="h-4 w-4" />
+                {saveMutation.isPending ? "שומר..." : isNew ? "הוסף רכב" : "שמור שינויים"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </form>
     </div>
   );
 }
