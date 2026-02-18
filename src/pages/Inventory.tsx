@@ -451,6 +451,7 @@ export default function Inventory() {
                   <TableHead className="text-right font-polin-medium">כ"ס</TableHead>
                   <TableHead className="text-right font-polin-medium">יד</TableHead>
                   <TableHead className="text-right font-polin-medium">ק"מ</TableHead>
+                  <TableHead className="text-right font-polin-medium">מחיר מחירון</TableHead>
                   <TableHead className="text-right font-polin-medium">מחיר מבוקש</TableHead>
                   <TableHead className="text-right font-polin-medium">סוג רכב</TableHead>
                   <TableHead className="text-right font-polin-medium">סוג מנוע</TableHead>
@@ -477,6 +478,7 @@ export default function Inventory() {
                     <TableCell className="font-polin-light">{v.horsepower || "—"}</TableCell>
                     <TableCell className="font-polin-light">{v.hand ?? "—"}</TableCell>
                     <TableCell className="font-polin-light">{v.odometer?.toLocaleString() ?? "—"}</TableCell>
+                    <TableCell className="font-polin-light">{v.list_price ? `₪${v.list_price.toLocaleString()}` : "—"}</TableCell>
                     <TableCell className="font-polin-medium text-primary">{v.asking_price ? `₪${v.asking_price.toLocaleString()}` : "—"}</TableCell>
                     <TableCell className="font-polin-light text-sm">
                       {(v as any).vehicle_type ? vehicleTypeLabels[(v as any).vehicle_type] ?? (v as any).vehicle_type : "—"}
