@@ -3,7 +3,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Car } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -32,43 +31,135 @@ export default function Auth() {
   };
 
   return (
-    <div dir="rtl" className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-            <Car className="h-6 w-6 text-primary-foreground" />
+    <div dir="rtl" className="flex min-h-screen bg-background">
+      {/* Left panel - decorative */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-hero flex-col justify-between p-12 relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-16 right-16 w-64 h-64 rounded-full border-2 border-gold" />
+          <div className="absolute top-32 right-32 w-40 h-40 rounded-full border border-gold" />
+          <div className="absolute bottom-24 left-16 w-80 h-80 rounded-full border-2 border-white/30" />
+          <div className="absolute bottom-48 left-48 w-32 h-32 rounded-full border border-white/20" />
+        </div>
+
+        <div className="relative z-10 animate-fade-in">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-full bg-gradient-gold flex items-center justify-center">
+              <Car className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-white font-polin-medium text-lg">מנהל מלאי רכבים</span>
           </div>
-          <CardTitle className="text-2xl">ניהול מלאי רכבים</CardTitle>
-          <CardDescription>{isSignUp ? "יצירת חשבון חדש" : "התחברות למערכת"}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        </div>
+
+        <div className="relative z-10 animate-slide-up" style={{ animationDelay: "0.1s" }}>
+          <h1 className="text-5xl font-polin-medium text-white leading-tight mb-6">
+            ניהול מלאי
+            <br />
+            <span className="text-gold">חכם ויעיל</span>
+          </h1>
+          <p className="text-white/70 font-polin-light text-lg leading-relaxed max-w-sm">
+            מערכת מתקדמת לניהול רכבים, עסקאות ולקוחות — הכל במקום אחד.
+          </p>
+        </div>
+
+        <div className="relative z-10 grid grid-cols-3 gap-4 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+          {[
+            { label: "ניהול מלאי", desc: "מעקב מלא" },
+            { label: "תמונות ומסמכים", desc: "אחסון מאובטח" },
+            { label: "הרשאות", desc: "שליטה מלאה" },
+          ].map((item) => (
+            <div key={item.label} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+              <div className="text-gold font-polin-medium text-sm mb-1">{item.label}</div>
+              <div className="text-white/60 font-polin-light text-xs">{item.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right panel - form */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-md animate-scale-in">
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+              <Car className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className="font-polin-medium text-xl text-foreground">מנהל מלאי רכבים</span>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-3xl font-polin-medium text-foreground mb-2">
+              {isSignUp ? "יצירת חשבון" : "ברוך הבא"}
+            </h2>
+            <p className="text-muted-foreground font-polin-light">
+              {isSignUp ? "מלא את הפרטים כדי להתחיל" : "התחבר כדי להמשיך"}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             {isSignUp && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName">שם מלא</Label>
-                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+              <div className="space-y-2 animate-fade-in">
+                <Label htmlFor="fullName" className="font-polin-medium text-foreground">שם מלא</Label>
+                <Input
+                  id="fullName"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  placeholder="ישראל ישראלי"
+                  className="h-11 font-polin-light"
+                />
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">אימייל</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Label htmlFor="email" className="font-polin-medium text-foreground">אימייל</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="example@email.com"
+                className="h-11 font-polin-light"
+                dir="ltr"
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">סיסמה</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+              <Label htmlFor="password" className="font-polin-medium text-foreground">סיסמה</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                placeholder="לפחות 6 תווים"
+                className="h-11 font-polin-light"
+                dir="ltr"
+              />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+
+            <Button
+              type="submit"
+              className="w-full h-11 font-polin-medium text-base bg-primary hover:bg-primary/90 transition-all duration-200 animate-pulse-gold"
+              disabled={loading}
+            >
               {loading ? "טוען..." : isSignUp ? "הרשמה" : "התחברות"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            {isSignUp ? "כבר יש לך חשבון?" : "אין לך חשבון?"}{" "}
-            <button onClick={() => setIsSignUp(!isSignUp)} className="text-primary underline">
+
+          <div className="mt-6 text-center">
+            <span className="text-muted-foreground font-polin-light text-sm">
+              {isSignUp ? "כבר יש לך חשבון?" : "אין לך חשבון?"}
+            </span>{" "}
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-accent font-polin-medium text-sm hover:underline transition-all"
+            >
               {isSignUp ? "התחברות" : "הרשמה"}
             </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
