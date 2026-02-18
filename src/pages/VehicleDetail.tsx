@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Save, Upload, Images, ClipboardCheck, ExternalLink, Trash2, Car, FileText, Wrench, Banknote, Info, Plus, X } from "lucide-react";
 import ManufacturerLogo from "@/components/ManufacturerLogo";
+import VehiclePrintView from "@/components/VehiclePrintView";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import VehicleGallery from "@/components/VehicleGallery";
@@ -239,6 +240,9 @@ export default function VehicleDetail() {
               <span className={`inline-block rounded-full px-3 py-1 text-xs font-polin-medium ${STATUS_COLORS[form.status] ?? ""}`}>
                 {STATUS_LABELS[form.status] ?? form.status}
               </span>
+            )}
+            {!isNew && (
+              <VehiclePrintView vehicle={form} agentName={user?.email ?? ""} />
             )}
           </div>
         </div>
