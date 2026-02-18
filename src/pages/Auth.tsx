@@ -3,8 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Car } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import logoImg from "@/assets/logo.png";
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -44,10 +44,7 @@ export default function Auth() {
 
         <div className="relative z-10 animate-fade-in">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-gold flex items-center justify-center">
-              <Car className="w-5 h-5 text-primary" />
-            </div>
-            <span className="text-white font-polin-medium text-lg">מנהל מלאי רכבים</span>
+            <img src={logoImg} alt="לוגו" className="h-12 w-auto object-contain" />
           </div>
         </div>
 
@@ -80,11 +77,8 @@ export default function Auth() {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md animate-scale-in">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-              <Car className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-polin-medium text-xl text-foreground">מנהל מלאי רכבים</span>
+          <div className="lg:hidden flex items-center justify-center mb-8">
+            <img src={logoImg} alt="לוגו" className="h-14 w-auto object-contain" />
           </div>
 
           <div className="mb-8">

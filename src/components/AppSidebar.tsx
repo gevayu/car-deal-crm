@@ -1,4 +1,5 @@
 import { Car, BarChart3, Users, LogOut, ChevronLeft, UserCircle } from "lucide-react";
+import logoImg from "@/assets/logo.png";
 import { NavLink } from "@/components/NavLink";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,19 +41,13 @@ export function AppSidebar() {
       <SidebarHeader className="bg-sidebar px-3 py-4">
         <div className="flex items-center justify-between">
           {!collapsed && (
-            <div className="flex items-center gap-2.5 animate-fade-in">
-              <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center flex-shrink-0">
-                <Car className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sidebar-foreground font-polin-medium text-sm leading-tight">מערכת ניהול</p>
-                <p className="text-sidebar-foreground/50 font-polin-light text-xs">רכבים</p>
-              </div>
+            <div className="flex items-center gap-2 animate-fade-in">
+              <img src={logoImg} alt="לוגו" className="h-10 w-auto object-contain" />
             </div>
           )}
           {collapsed && (
-            <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center mx-auto">
-              <Car className="h-4 w-4 text-primary" />
+            <div className="flex items-center justify-center mx-auto">
+              <img src={logoImg} alt="לוגו" className="h-8 w-auto object-contain" />
             </div>
           )}
           <SidebarTrigger className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent ml-auto">
