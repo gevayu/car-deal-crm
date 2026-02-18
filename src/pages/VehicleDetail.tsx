@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Save, Upload, Images, ClipboardCheck, ExternalLink, Trash2, Car, LogOut, BarChart3 } from "lucide-react";
+import { ArrowRight, Save, Upload, Images, ClipboardCheck, ExternalLink, Trash2, Car } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import VehicleGallery from "@/components/VehicleGallery";
@@ -151,7 +151,7 @@ export default function VehicleDetail() {
   };
 
   if (isLoading) return (
-    <div dir="rtl" className="flex min-h-screen items-center justify-center bg-background">
+    <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center space-y-3">
         <div className="w-12 h-12 rounded-full bg-gradient-gold mx-auto flex items-center justify-center animate-pulse">
           <Car className="h-6 w-6 text-primary" />
@@ -162,7 +162,7 @@ export default function VehicleDetail() {
   );
 
   return (
-    <div dir="rtl" className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
 
       {/* ── Header ── */}
       <header className="border-b bg-primary shadow-elevated sticky top-0 z-20">
@@ -187,11 +187,6 @@ export default function VehicleDetail() {
                 {STATUS_LABELS[form.status] ?? form.status}
               </span>
             )}
-            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}
-              className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-white/10 font-polin-light gap-1.5">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">דשבורד</span>
-            </Button>
           </div>
         </div>
       </header>

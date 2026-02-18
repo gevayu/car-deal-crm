@@ -2,13 +2,12 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
-  LogOut, ArrowRight, Users, ShieldCheck, UserRound,
+  Users, ShieldCheck, UserRound,
   Mail, Phone, Clock, RefreshCw,
 } from "lucide-react";
 
@@ -28,8 +27,7 @@ function formatDate(iso: string | null) {
 }
 
 export default function UsersManagement() {
-  const { isAdmin, signOut, user } = useAuth();
-  const navigate = useNavigate();
+  const { isAdmin, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [changingId, setChangingId] = useState<string | null>(null);
@@ -80,31 +78,15 @@ export default function UsersManagement() {
   const sales = users.filter((u) => u.role === "sales");
 
   return (
-    <div dir="rtl" className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-primary shadow-elevated sticky top-0 z-10">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center px-6 py-4">
           <div className="flex items-center gap-3 animate-fade-in">
             <div className="w-9 h-9 rounded-full bg-gradient-gold flex items-center justify-center">
               <Users className="h-5 w-5 text-primary" />
             </div>
             <h1 className="text-xl font-polin-medium text-primary-foreground">ניהול משתמשים</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-polin-light text-primary-foreground/70 hidden sm:block">{user?.email}</span>
-            <Badge className="bg-accent text-accent-foreground font-polin-medium border-0">מנהל</Badge>
-            <Button
-              variant="ghost" size="sm"
-              onClick={() => navigate("/")}
-              className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10 font-polin-light gap-1.5"
-            >
-              <ArrowRight className="h-4 w-4" />
-              למלאי
-            </Button>
-            <Button variant="ghost" size="icon" onClick={signOut}
-              className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10">
-              <LogOut className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </header>

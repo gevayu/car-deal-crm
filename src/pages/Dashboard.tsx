@@ -1,17 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Car, LogOut, TrendingUp, DollarSign, Package, CheckCircle,
-  Clock, BarChart3, ArrowLeft, Wrench, CalendarDays, Users, ShieldCheck,
+  TrendingUp, DollarSign, Package, CheckCircle,
+  Clock, BarChart3, Wrench, CalendarDays,
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  AreaChart, Area,
 } from "recharts";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -42,7 +39,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function Dashboard() {
-  const { isAdmin, signOut, user } = useAuth();
   const navigate = useNavigate();
 
   const { data: vehicles = [], isLoading } = useQuery({
@@ -151,10 +147,10 @@ export default function Dashboard() {
   ];
 
   return (
-    <div dir="rtl" className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-primary shadow-elevated sticky top-0 z-10">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-7xl items-center px-6 py-4">
           <div className="flex items-center gap-3 animate-fade-in">
             <div className="w-9 h-9 rounded-full bg-gradient-gold flex items-center justify-center">
               <BarChart3 className="h-5 w-5 text-primary" />
@@ -165,26 +161,6 @@ export default function Dashboard() {
                 {now.toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
               </p>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-polin-light text-primary-foreground/70 hidden sm:block">{user?.email}</span>
-            <Badge className="bg-accent text-accent-foreground font-polin-medium border-0">
-              {isAdmin ? "מנהל" : "איש מכירות"}
-            </Badge>
-            {isAdmin && (
-              <Button variant="ghost" size="sm" onClick={() => navigate("/users")}
-                className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10 font-polin-light gap-1.5">
-                <Users className="h-4 w-4" /><span className="hidden sm:inline">משתמשים</span>
-              </Button>
-            )}
-            <Button variant="ghost" size="sm" onClick={() => navigate("/")}
-              className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10 font-polin-light gap-1.5">
-              <ArrowLeft className="h-4 w-4" /><span className="hidden sm:inline">למלאי</span>
-            </Button>
-            <Button variant="ghost" size="icon" onClick={signOut}
-              className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10">
-              <LogOut className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </header>

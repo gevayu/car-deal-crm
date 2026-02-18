@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Trash2, LogOut, Car, Eye, BarChart3, Users, Download } from "lucide-react";
+import { Plus, Search, Trash2, Car, Eye, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -27,7 +27,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function Inventory() {
-  const { isAdmin, signOut, user } = useAuth();
+  const { isAdmin } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -116,34 +116,15 @@ export default function Inventory() {
   });
 
   return (
-    <div dir="rtl" className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-primary shadow-elevated">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-7xl items-center px-6 py-4">
           <div className="flex items-center gap-3 animate-fade-in">
             <div className="w-9 h-9 rounded-full bg-gradient-gold flex items-center justify-center">
               <Car className="h-5 w-5 text-primary" />
             </div>
             <h1 className="text-xl font-polin-medium text-primary-foreground">ניהול מלאי רכבים</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-polin-light text-primary-foreground/70 hidden sm:block">{user?.email}</span>
-            <Badge className="bg-accent text-accent-foreground font-polin-medium border-0">
-              {isAdmin ? "מנהל" : "איש מכירות"}
-            </Badge>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10 font-polin-light gap-1.5">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">דשבורד</span>
-            </Button>
-            {isAdmin && (
-              <Button variant="ghost" size="sm" onClick={() => navigate("/users")} className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10 font-polin-light gap-1.5">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">משתמשים</span>
-              </Button>
-            )}
-            <Button variant="ghost" size="icon" onClick={signOut} className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10">
-              <LogOut className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </header>
