@@ -76,9 +76,9 @@ export default function Auth() {
       {/* Right panel - form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md animate-scale-in">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center mb-8">
-            <img src={logoImg} alt="לוגו" className="h-14 w-auto object-contain" />
+          {/* Logo above form */}
+          <div className="flex items-center justify-center mb-8">
+            <img src={logoImg} alt="לוגו" className="h-24 w-auto object-contain" />
           </div>
 
           <div className="mb-8">
