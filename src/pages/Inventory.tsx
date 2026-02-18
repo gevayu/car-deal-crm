@@ -514,7 +514,7 @@ export default function Inventory() {
                   >
                     <TableCell className="font-polin-medium">
                       <div className="flex items-center gap-2.5">
-                        <ManufacturerLogo manufacturer={v.manufacturer} size={32} />
+                        <ManufacturerLogo manufacturer={v.manufacturer} size={44} />
                         <span>{[v.manufacturer, v.model].filter(Boolean).join(" ") || "—"}</span>
                       </div>
                     </TableCell>
