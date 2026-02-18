@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Trash2, LogOut, Car, Eye } from "lucide-react";
+import { Plus, Search, Trash2, LogOut, Car, Eye, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -81,6 +81,10 @@ export default function Inventory() {
             <Badge className="bg-accent text-accent-foreground font-polin-medium border-0">
               {isAdmin ? "מנהל" : "איש מכירות"}
             </Badge>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10 font-polin-light gap-1.5">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">דשבורד</span>
+            </Button>
             <Button variant="ghost" size="icon" onClick={signOut} className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10">
               <LogOut className="h-4 w-4" />
             </Button>
