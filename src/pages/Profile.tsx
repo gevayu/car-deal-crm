@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { User, Phone, Building2, Mail, ShieldCheck, Save } from "lucide-react";
+import { User, Phone, Building2, Mail, ShieldCheck, Save, Lock, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
 const profileSchema = z.object({
@@ -22,7 +22,19 @@ const profileSchema = z.object({
   branch: z.string().trim().max(100, "שם סניף לא יכול להיות ארוך מ-100 תווים").optional(),
 });
 
+const passwordSchema = z
+  .object({
+    current_password: z.string().min(1, "נא להזין סיסמה נוכחית"),
+    new_password: z.string().min(6, "הסיסמה החדשה חייבת להכיל לפחות 6 תווים"),
+    confirm_password: z.string().min(1, "נא לאשר את הסיסמה החדשה"),
+  })
+  .refine((d) => d.new_password === d.confirm_password, {
+    message: "הסיסמאות אינן תואמות",
+    path: ["confirm_password"],
+  });
+
 type ProfileForm = z.infer<typeof profileSchema>;
+type PasswordForm = z.infer<typeof passwordSchema>;
 
 export default function Profile() {
   const { user, isAdmin } = useAuth();
@@ -31,6 +43,10 @@ export default function Profile() {
 
   const [form, setForm] = useState<ProfileForm>({ full_name: "", phone: "", branch: "" });
   const [errors, setErrors] = useState<Partial<ProfileForm>>({});
+
+  const [pwForm, setPwForm] = useState<PasswordForm>({ current_password: "", new_password: "", confirm_password: "" });
+  const [pwErrors, setPwErrors] = useState<Partial<Record<keyof PasswordForm, string>>>({});
+  const [showPw, setShowPw] = useState({ current: false, new: false, confirm: false });
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", user?.id],
@@ -77,6 +93,32 @@ export default function Profile() {
     },
   });
 
+  const passwordMutation = useMutation({
+    mutationFn: async (values: PasswordForm) => {
+      // Re-authenticate by signing in with current password first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user!.email!,
+        password: values.current_password,
+      });
+      if (signInError) throw new Error("הסיסמה הנוכחית שגויה");
+
+      const { error } = await supabase.auth.updateUser({ password: values.new_password });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "הסיסמה עודכנה בהצלחה" });
+      setPwForm({ current_password: "", new_password: "", confirm_password: "" });
+      setPwErrors({});
+    },
+    onError: (err: Error) => {
+      if (err.message === "הסיסמה הנוכחית שגויה") {
+        setPwErrors({ current_password: err.message });
+      } else {
+        toast({ title: "שגיאה בעדכון הסיסמה", description: err.message, variant: "destructive" });
+      }
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -91,6 +133,22 @@ export default function Profile() {
       return;
     }
     saveMutation.mutate(result.data);
+  };
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwErrors({});
+    const result = passwordSchema.safeParse(pwForm);
+    if (!result.success) {
+      const fieldErrors: Partial<Record<keyof PasswordForm, string>> = {};
+      result.error.errors.forEach(err => {
+        const field = err.path[0] as keyof PasswordForm;
+        fieldErrors[field] = err.message;
+      });
+      setPwErrors(fieldErrors);
+      return;
+    }
+    passwordMutation.mutate(result.data);
   };
 
   const Field = ({
@@ -117,6 +175,41 @@ export default function Profile() {
       />
       {errors[name] && (
         <p className="text-xs text-destructive font-polin-light">{errors[name]}</p>
+      )}
+    </div>
+  );
+
+  const PwField = ({
+    label, name, showKey,
+  }: {
+    label: string;
+    name: keyof PasswordForm;
+    showKey: keyof typeof showPw;
+  }) => (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+        <Lock className="h-3.5 w-3.5" />
+        {label}
+      </Label>
+      <div className="relative">
+        <Input
+          type={showPw[showKey] ? "text" : "password"}
+          value={pwForm[name]}
+          onChange={e => setPwForm(prev => ({ ...prev, [name]: e.target.value }))}
+          className="font-polin-light bg-background border-border/60 focus:border-primary text-sm pl-10"
+          dir="ltr"
+          autoComplete="new-password"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPw(prev => ({ ...prev, [showKey]: !prev[showKey] }))}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {showPw[showKey] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+      {pwErrors[name] && (
+        <p className="text-xs text-destructive font-polin-light">{pwErrors[name]}</p>
       )}
     </div>
   );
@@ -192,6 +285,34 @@ export default function Profile() {
                   >
                     <Save className="h-4 w-4" />
                     {saveMutation.isPending ? "שומר..." : "שמור שינויים"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+
+            {/* Change Password */}
+            <form onSubmit={handlePasswordSubmit}>
+              <div className="bg-card rounded-2xl border shadow-card p-6 space-y-5">
+                <h2 className="font-polin-medium text-foreground text-base border-b border-border/50 pb-3 flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-primary" />
+                  שינוי סיסמה
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="sm:col-span-2">
+                    <PwField label="סיסמה נוכחית" name="current_password" showKey="current" />
+                  </div>
+                  <PwField label="סיסמה חדשה" name="new_password" showKey="new" />
+                  <PwField label="אימות סיסמה חדשה" name="confirm_password" showKey="confirm" />
+                </div>
+                <p className="text-xs font-polin-light text-muted-foreground">הסיסמה חייבת להכיל לפחות 6 תווים</p>
+                <div className="flex justify-start pt-1">
+                  <Button
+                    type="submit"
+                    disabled={passwordMutation.isPending}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-polin-medium gap-2 px-6"
+                  >
+                    <Lock className="h-4 w-4" />
+                    {passwordMutation.isPending ? "מעדכן..." : "עדכן סיסמה"}
                   </Button>
                 </div>
               </div>
