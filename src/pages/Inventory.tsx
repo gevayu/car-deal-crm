@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Trash2, Car, Eye, Download, SlidersHorizontal, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import ManufacturerLogo from "@/components/ManufacturerLogo";
 
 const statusLabels: Record<string, string> = {
   available: "זמין",
@@ -443,7 +444,12 @@ export default function Inventory() {
                     className="cursor-pointer hover:bg-accent/5 transition-colors duration-150"
                     onClick={() => navigate(`/vehicle/${v.id}`)}
                   >
-                    <TableCell className="font-polin-medium">{[v.manufacturer, v.model].filter(Boolean).join(" ") || "—"}</TableCell>
+                    <TableCell className="font-polin-medium">
+                      <div className="flex items-center gap-2.5">
+                        <ManufacturerLogo manufacturer={v.manufacturer} size={32} />
+                        <span>{[v.manufacturer, v.model].filter(Boolean).join(" ") || "—"}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="font-polin-light">{v.license_plate || "—"}</TableCell>
                     <TableCell className="font-polin-light">{v.color || "—"}</TableCell>
                     <TableCell className="font-polin-light">{v.year || "—"}</TableCell>
