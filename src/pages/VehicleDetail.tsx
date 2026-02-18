@@ -162,7 +162,7 @@ export default function VehicleDetail() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
 
       {/* ── Header ── */}
       <header className="border-b bg-primary shadow-elevated sticky top-0 z-20">
@@ -473,12 +473,12 @@ export default function VehicleDetail() {
           )}
 
           {/* bottom padding for sticky bar */}
-          <div className="h-24" />
+          <div className="h-6" />
         </div>
 
         {/* ── Sticky Save Bar ── */}
         {isAdmin && (
-          <div className="fixed bottom-0 left-0 right-0 z-30 border-t bg-card/95 backdrop-blur-sm shadow-elevated">
+          <div className="sticky bottom-0 z-20 border-t bg-card/95 backdrop-blur-sm shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
             <div className="px-6 py-3 flex items-center justify-between max-w-5xl mx-auto">
               <p className="text-xs font-polin-light text-muted-foreground">
                 {isNew ? "מלא את הפרטים ולחץ שמירה להוספת הרכב" : "שנה פרטים ולחץ שמירה לעדכון"}
