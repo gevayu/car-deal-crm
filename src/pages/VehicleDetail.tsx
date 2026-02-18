@@ -212,7 +212,20 @@ export default function VehicleDetail() {
               <Field label="דגם" name="model" />
               <Field label="רמת גימור" name="trim_level" />
               <Field label="שנה" name="year" type="number" />
-              <Field label="סוג מנוע" name="engine_type" />
+              <div className="space-y-1.5">
+                <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">סוג מנוע</Label>
+                <Select value={form.engine_type || ""} onValueChange={(v) => set("engine_type", v || null)} disabled={!isAdmin}>
+                  <SelectTrigger className="h-10 font-polin-light"><SelectValue placeholder="בחר סוג מנוע" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gasoline">בנזין</SelectItem>
+                    <SelectItem value="diesel">דיזל</SelectItem>
+                    <SelectItem value="hybrid">היברידי</SelectItem>
+                    <SelectItem value="plugin_hybrid">היברידי פלאג-אין</SelectItem>
+                    <SelectItem value="electric">חשמלי</SelectItem>
+                    <SelectItem value="lpg">גז (LPG)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <Field label="נפח מנוע" name="engine_volume" />
               <Field label="כוחות סוס" name="horsepower" />
               <Field label="תיבת הילוכים" name="transmission" />
