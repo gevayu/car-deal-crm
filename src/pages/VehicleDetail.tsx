@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Save, Upload, Images, ClipboardCheck, ExternalLink, Trash2, Car, FileText, Wrench, Banknote, Info } from "lucide-react";
+import ManufacturerLogo from "@/components/ManufacturerLogo";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import VehicleGallery from "@/components/VehicleGallery";
@@ -172,13 +173,18 @@ export default function VehicleDetail() {
               className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
               <ArrowRight className="h-4 w-4 text-primary-foreground" />
             </button>
-            <div>
-              <h1 className="text-lg font-polin-medium text-primary-foreground leading-tight">
-                {isNew ? "הוספת רכב חדש" : [form.manufacturer, form.model].filter(Boolean).join(" ") || "כרטיס רכב"}
-              </h1>
-              {!isNew && form.license_plate && (
-                <p className="text-xs font-polin-light text-primary-foreground/60">{form.license_plate}</p>
+            <div className="flex items-center gap-3">
+              {!isNew && form.manufacturer && (
+                <ManufacturerLogo manufacturer={form.manufacturer} size={38} />
               )}
+              <div>
+                <h1 className="text-lg font-polin-medium text-primary-foreground leading-tight">
+                  {isNew ? "הוספת רכב חדש" : [form.manufacturer, form.model].filter(Boolean).join(" ") || "כרטיס רכב"}
+                </h1>
+                {!isNew && form.license_plate && (
+                  <p className="text-xs font-polin-light text-primary-foreground/60">{form.license_plate}</p>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
