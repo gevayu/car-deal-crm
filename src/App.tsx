@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import Inventory from "./pages/Inventory";
 import VehicleDetail from "./pages/VehicleDetail";
 import Dashboard from "./pages/Dashboard";
+import UsersManagement from "./pages/UsersManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/vehicle/:id" element={<ProtectedRoute><VehicleDetail /></ProtectedRoute>} />
+            <Route path="/users" element={<ProtectedRoute><UsersManagement /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
