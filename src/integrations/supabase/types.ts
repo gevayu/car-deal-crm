@@ -97,6 +97,7 @@ export type Database = {
           transmission: string | null
           trim_level: string | null
           updated_at: string
+          vehicle_type: string | null
           weighted_list_price: number | null
           year: number | null
         }
@@ -137,6 +138,7 @@ export type Database = {
           transmission?: string | null
           trim_level?: string | null
           updated_at?: string
+          vehicle_type?: string | null
           weighted_list_price?: number | null
           year?: number | null
         }
@@ -177,6 +179,7 @@ export type Database = {
           transmission?: string | null
           trim_level?: string | null
           updated_at?: string
+          vehicle_type?: string | null
           weighted_list_price?: number | null
           year?: number | null
         }

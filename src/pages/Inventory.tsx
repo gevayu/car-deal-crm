@@ -27,6 +27,16 @@ const statusColors: Record<string, string> = {
   in_treatment: "bg-blue-100 text-blue-700 border border-blue-200",
 };
 
+const vehicleTypeLabels: Record<string, string> = {
+  small: "רכב קטן",
+  family: "משפחתי",
+  executive: "מנהלים",
+  suv: "SUV / ג'יפ",
+  van: "ואן / מסחרי",
+  truck: "משאית / פיקאפ",
+  electric: "חשמלי",
+};
+
 interface Filters {
   search: string;
   status: string;
@@ -433,6 +443,7 @@ export default function Inventory() {
                   <TableHead className="text-right font-polin-medium">יד</TableHead>
                   <TableHead className="text-right font-polin-medium">ק"מ</TableHead>
                   <TableHead className="text-right font-polin-medium">מחיר מבוקש</TableHead>
+                  <TableHead className="text-right font-polin-medium">סוג רכב</TableHead>
                   <TableHead className="text-right font-polin-medium">סטטוס</TableHead>
                   <TableHead className="text-right font-polin-medium">פעולות</TableHead>
                 </TableRow>
@@ -457,6 +468,9 @@ export default function Inventory() {
                     <TableCell className="font-polin-light">{v.hand ?? "—"}</TableCell>
                     <TableCell className="font-polin-light">{v.odometer?.toLocaleString() ?? "—"}</TableCell>
                     <TableCell className="font-polin-medium text-primary">{v.asking_price ? `₪${v.asking_price.toLocaleString()}` : "—"}</TableCell>
+                    <TableCell className="font-polin-light text-sm">
+                      {(v as any).vehicle_type ? vehicleTypeLabels[(v as any).vehicle_type] ?? (v as any).vehicle_type : "—"}
+                    </TableCell>
                     <TableCell>
                       <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-polin-medium ${statusColors[v.status || "available"]}`}>
                         {statusLabels[v.status || "available"]}

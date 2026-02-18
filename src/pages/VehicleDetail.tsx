@@ -253,6 +253,21 @@ export default function VehicleDetail() {
           <Section title="פרטי עסקה" icon={Banknote}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               <div className="space-y-1.5">
+                <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">סוג רכב</Label>
+                <Select value={form.vehicle_type || ""} onValueChange={(v) => set("vehicle_type", v || null)} disabled={!isAdmin}>
+                  <SelectTrigger className="h-10 font-polin-light"><SelectValue placeholder="בחר סוג רכב" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="small">רכב קטן</SelectItem>
+                    <SelectItem value="family">משפחתי</SelectItem>
+                    <SelectItem value="executive">מנהלים</SelectItem>
+                    <SelectItem value="suv">SUV / ג'יפ</SelectItem>
+                    <SelectItem value="van">ואן / מסחרי</SelectItem>
+                    <SelectItem value="truck">משאית / פיקאפ</SelectItem>
+                    <SelectItem value="electric">חשמלי</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
                 <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">סוג עסקה</Label>
                 <Select value={form.deal_type || "regular_sale"} onValueChange={(v) => set("deal_type", v)} disabled={!isAdmin}>
                   <SelectTrigger className="h-10 font-polin-light"><SelectValue /></SelectTrigger>
