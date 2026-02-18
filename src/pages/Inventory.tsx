@@ -1,4 +1,5 @@
 import { useState } from "react";
+import * as XLSX from "xlsx";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Trash2, LogOut, Car, Eye, BarChart3, Users } from "lucide-react";
+import { Plus, Search, Trash2, LogOut, Car, Eye, BarChart3, Users, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -32,6 +33,55 @@ export default function Inventory() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const exportToExcel = () => {
+    const rows = filtered.map((v) => ({
+      "יצרן": v.manufacturer || "",
+      "דגם": v.model || "",
+      "רמת גימור": v.trim_level || "",
+      "מספר רישוי": v.license_plate || "",
+      "מספר שלדה": v.chassis_number || "",
+      "מספר מנוע": v.engine_number || "",
+      "קוד רכב": v.code || "",
+      "קוד דגם": v.model_code || "",
+      "שנה": v.year || "",
+      "צבע": v.color || "",
+      "יד": v.hand ?? "",
+      "ק\"מ": v.odometer || "",
+      "כ\"ס": v.horsepower || "",
+      "נפח מנוע": v.engine_volume || "",
+      "סוג מנוע": v.engine_type || "",
+      "תיבת הילוכים": v.transmission || "",
+      "מושבים": v.seats || "",
+      "דלתות": v.doors || "",
+      "תאריך כניסה": v.entry_date || "",
+      "תאריך טסט": v.test_date || "",
+      "סטטוס": statusLabels[v.status || "available"],
+      "סניף": v.branch || "",
+      "איש מכירות": v.salesperson || "",
+      "סוג עסקה": v.deal_type === "brokerage" ? "תיווך" : "מכירה רגילה",
+      "מחיר רשימה": v.list_price || "",
+      "מחיר רשימה משוקלל": v.weighted_list_price || "",
+      "מחיר קנייה": v.purchase_price || "",
+      "הוצאות": v.expenses || "",
+      "אגרת רישוי": v.registration_fee || "",
+      "מחיר מבוקש": v.asking_price || "",
+      "רכב מקורי": v.is_original ? "כן" : "לא",
+      "עצור": v.is_pledged ? "כן" : "לא",
+      "דרוש מסלול": v.needs_route ? "כן" : "לא",
+      "הערות": v.notes || "",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "מלאי רכבים");
+
+    // Set column widths
+    ws["!cols"] = Array(Object.keys(rows[0] || {}).length).fill({ wch: 18 });
+
+    XLSX.writeFile(wb, `מלאי_רכבים_${new Date().toLocaleDateString("he-IL").replace(/\//g, "-")}.xlsx`);
+    toast({ title: "הקובץ יוצא בהצלחה", description: `${filtered.length} רכבים יוצאו לאקסל` });
+  };
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles"],
@@ -143,6 +193,15 @@ export default function Inventory() {
               הוספת רכב
             </Button>
           )}
+          <Button
+            variant="outline"
+            onClick={exportToExcel}
+            disabled={filtered.length === 0}
+            className="h-10 font-polin-medium gap-1.5"
+          >
+            <Download className="h-4 w-4" />
+            ייצוא Excel
+          </Button>
         </div>
 
         {/* Table */}
