@@ -10,9 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowRight, Save, Upload, Trash2, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Save, Upload, Images } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+import VehicleGallery from "@/components/VehicleGallery";
 
 type Vehicle = Tables<"vehicles">;
 
@@ -38,7 +40,7 @@ export default function VehicleDetail() {
   const [form, setForm] = useState<Record<string, any>>(emptyVehicle);
   const [photos, setPhotos] = useState<string[]>([]);
   const [documents, setDocuments] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
+  
 
   const { data: vehicle, isLoading } = useQuery({
     queryKey: ["vehicle", id],
@@ -95,25 +97,6 @@ export default function VehicleDetail() {
     e.preventDefault();
     const { id: _id, created_at, updated_at, ...rest } = form;
     saveMutation.mutate(rest);
-  };
-
-  const uploadFile = async (file: File, bucket: string) => {
-    const vehicleId = isNew ? "temp" : id;
-    const path = `${vehicleId}/${Date.now()}_${file.name}`;
-    setUploading(true);
-    const { error } = await supabase.storage.from(bucket).upload(path, file);
-    setUploading(false);
-    if (error) {
-      toast({ title: "שגיאה בהעלאה", description: error.message, variant: "destructive" });
-      return;
-    }
-    if (bucket === "vehicle-photos") {
-      const url = supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
-      setPhotos(prev => [...prev, url]);
-    } else {
-      setDocuments(prev => [...prev, file.name]);
-    }
-    toast({ title: "הקובץ הועלה בהצלחה" });
   };
 
   const set = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }));
@@ -244,26 +227,27 @@ export default function VehicleDetail() {
             </CardContent>
           </Card>
 
-          {/* Photos */}
+          {/* Photos Gallery */}
           {!isNew && (
             <Card>
-              <CardHeader><CardTitle className="text-lg">תמונות</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Images className="h-5 w-5 text-accent" />
+                  גלריית תמונות
+                  {photos.length > 0 && (
+                    <Badge className="bg-accent/15 text-accent-foreground border-0 font-polin-light text-xs">
+                      {photos.length} תמונות
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
               <CardContent>
-                <div className="mb-4 flex flex-wrap gap-3">
-                  {photos.map((url, i) => (
-                    <div key={i} className="relative h-24 w-32 overflow-hidden rounded-lg border">
-                      <img src={url} alt={`תמונה ${i + 1}`} className="h-full w-full object-cover" />
-                    </div>
-                  ))}
-                  {photos.length === 0 && <p className="text-sm text-muted-foreground">אין תמונות</p>}
-                </div>
-                {isAdmin && (
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border bg-background px-4 py-2 text-sm hover:bg-muted">
-                    <Upload className="h-4 w-4" />
-                    {uploading ? "מעלה..." : "העלאת תמונה"}
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "vehicle-photos")} />
-                  </label>
-                )}
+                <VehicleGallery
+                  vehicleId={id!}
+                  photos={photos}
+                  onPhotosChange={setPhotos}
+                  isAdmin={isAdmin}
+                />
               </CardContent>
             </Card>
           )}
@@ -277,16 +261,26 @@ export default function VehicleDetail() {
                   {documents.map((name, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
                       <span>📄</span>
-                      <span>{name}</span>
+                      <span className="font-polin-light">{name}</span>
                     </div>
                   ))}
-                  {documents.length === 0 && <p className="text-sm text-muted-foreground">אין מסמכים</p>}
+                  {documents.length === 0 && <p className="text-sm text-muted-foreground font-polin-light">אין מסמכים</p>}
                 </div>
                 {isAdmin && (
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border bg-background px-4 py-2 text-sm hover:bg-muted">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border bg-background px-4 py-2 text-sm hover:bg-muted font-polin-light">
                     <Upload className="h-4 w-4" />
-                    {uploading ? "מעלה..." : "העלאת מסמך"}
-                    <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "vehicle-documents")} />
+                    העלאת מסמך
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const path = `${id}/${Date.now()}_${file.name}`;
+                        const { error } = await supabase.storage.from("vehicle-documents").upload(path, file);
+                        if (!error) setDocuments(prev => [...prev, file.name]);
+                      }}
+                    />
                   </label>
                 )}
               </CardContent>
