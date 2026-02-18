@@ -42,7 +42,7 @@ export function AppSidebar() {
         <div className="flex items-center justify-between">
           {!collapsed && (
             <div className="flex items-center gap-2 animate-fade-in">
-              <img src={logoImg} alt="לוגו" className="h-16 w-auto object-contain" />
+              <img src={logoImg} alt="לוגו" className="h-24 w-auto object-contain" />
             </div>
           )}
           {collapsed && (
