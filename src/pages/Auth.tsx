@@ -77,7 +77,7 @@ export default function Auth() {
 
         <div className="relative z-10 animate-fade-in">
           <div className="flex items-center gap-3 mb-2">
-            <img src={logoImg} alt="לוגו" className="h-12 w-auto object-contain" />
+            <img src={logoImg} alt="לוגו" className="h-24 w-auto object-contain" />
           </div>
         </div>
 
