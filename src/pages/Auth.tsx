@@ -4,16 +4,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import logoImg from "@/assets/logo.png";
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) {
+      toast({ title: "שגיאה", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "נשלח!", description: "בדוק את תיבת המייל שלך לקישור לאיפוס הסיסמה." });
+      setIsForgotPassword(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,77 +98,134 @@ export default function Auth() {
             <img src={logoImg} alt="לוגו" className="h-24 w-auto object-contain" />
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-3xl font-polin-medium text-foreground mb-2">
-              {isSignUp ? "יצירת חשבון" : "ברוך הבא"}
-            </h2>
-            <p className="text-muted-foreground font-polin-light">
-              {isSignUp ? "מלא את הפרטים כדי להתחיל" : "התחבר כדי להמשיך"}
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {isSignUp && (
-              <div className="space-y-2 animate-fade-in">
-                <Label htmlFor="fullName" className="font-polin-medium text-foreground">שם מלא</Label>
-                <Input
-                  id="fullName"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  placeholder="ישראל ישראלי"
-                  className="h-11 font-polin-light"
-                />
+          {isForgotPassword ? (
+            <>
+              <div className="mb-8">
+                <h2 className="text-3xl font-polin-medium text-foreground mb-2">שכחת סיסמה?</h2>
+                <p className="text-muted-foreground font-polin-light">
+                  הזן את כתובת המייל שלך ונשלח לך קישור לאיפוס הסיסמה.
+                </p>
               </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="font-polin-medium text-foreground">אימייל</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="example@email.com"
-                className="h-11 font-polin-light"
-                dir="ltr"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="font-polin-medium text-foreground">סיסמה</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                placeholder="לפחות 6 תווים"
-                className="h-11 font-polin-light"
-                dir="ltr"
-              />
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full h-11 font-polin-medium text-base bg-primary hover:bg-primary/90 transition-all duration-200 animate-pulse-gold"
-              disabled={loading}
-            >
-              {loading ? "טוען..." : isSignUp ? "הרשמה" : "התחברות"}
-            </Button>
-          </form>
+              <form onSubmit={handleForgotPassword} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="font-polin-medium text-foreground">אימייל</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="example@email.com"
+                    className="h-11 font-polin-light"
+                    dir="ltr"
+                  />
+                </div>
 
-          <div className="mt-6 text-center">
-            <span className="text-muted-foreground font-polin-light text-sm">
-              {isSignUp ? "כבר יש לך חשבון?" : "אין לך חשבון?"}
-            </span>{" "}
-            <button
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-accent font-polin-medium text-sm hover:underline transition-all"
-            >
-              {isSignUp ? "התחברות" : "הרשמה"}
-            </button>
-          </div>
+                <Button
+                  type="submit"
+                  className="w-full h-11 font-polin-medium text-base bg-primary hover:bg-primary/90 transition-all duration-200"
+                  disabled={loading}
+                >
+                  {loading ? "שולח..." : "שלח קישור לאיפוס"}
+                </Button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => setIsForgotPassword(false)}
+                  className="text-accent font-polin-medium text-sm hover:underline transition-all"
+                >
+                  חזרה להתחברות
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mb-8">
+                <h2 className="text-3xl font-polin-medium text-foreground mb-2">
+                  {isSignUp ? "יצירת חשבון" : "ברוך הבא"}
+                </h2>
+                <p className="text-muted-foreground font-polin-light">
+                  {isSignUp ? "מלא את הפרטים כדי להתחיל" : "התחבר כדי להמשיך"}
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {isSignUp && (
+                  <div className="space-y-2 animate-fade-in">
+                    <Label htmlFor="fullName" className="font-polin-medium text-foreground">שם מלא</Label>
+                    <Input
+                      id="fullName"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                      placeholder="ישראל ישראלי"
+                      className="h-11 font-polin-light"
+                    />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="font-polin-medium text-foreground">אימייל</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="example@email.com"
+                    className="h-11 font-polin-light"
+                    dir="ltr"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="font-polin-medium text-foreground">סיסמה</Label>
+                    {!isSignUp && (
+                      <button
+                        type="button"
+                        onClick={() => setIsForgotPassword(true)}
+                        className="text-accent font-polin-light text-xs hover:underline transition-all"
+                      >
+                        שכחת סיסמה?
+                      </button>
+                    )}
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    placeholder="לפחות 6 תווים"
+                    className="h-11 font-polin-light"
+                    dir="ltr"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full h-11 font-polin-medium text-base bg-primary hover:bg-primary/90 transition-all duration-200 animate-pulse-gold"
+                  disabled={loading}
+                >
+                  {loading ? "טוען..." : isSignUp ? "הרשמה" : "התחברות"}
+                </Button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <span className="text-muted-foreground font-polin-light text-sm">
+                  {isSignUp ? "כבר יש לך חשבון?" : "אין לך חשבון?"}
+                </span>{" "}
+                <button
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-accent font-polin-medium text-sm hover:underline transition-all"
+                >
+                  {isSignUp ? "התחברות" : "הרשמה"}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
