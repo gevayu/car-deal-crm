@@ -197,7 +197,8 @@ export default function Inventory() {
   const clearFilters = () => setFilters(emptyFilters);
 
   const exportToExcel = () => {
-    const rows = filtered.map((v) => ({
+    const allVehicles = vehicles || [];
+    const rows = allVehicles.map((v) => ({
       "יצרן": v.manufacturer || "",
       "דגם": v.model || "",
       "רמת גימור": v.trim_level || "",
@@ -239,7 +240,7 @@ export default function Inventory() {
     XLSX.utils.book_append_sheet(wb, ws, "מלאי רכבים");
     ws["!cols"] = Array(Object.keys(rows[0] || {}).length).fill({ wch: 18 });
     XLSX.writeFile(wb, `מלאי_רכבים_${new Date().toLocaleDateString("he-IL").replace(/\//g, "-")}.xlsx`);
-    toast({ title: "הקובץ יוצא בהצלחה", description: `${filtered.length} רכבים יוצאו לאקסל` });
+    toast({ title: "הקובץ יוצא בהצלחה", description: `${allVehicles.length} רכבים יוצאו לאקסל` });
   };
 
   return (

@@ -10,7 +10,7 @@ import {
   Users, ShieldCheck, UserRound,
   Mail, Phone, Clock, RefreshCw,
 } from "lucide-react";
-import { GoogleDriveSettings } from "@/components/GoogleDriveSettings";
+
 
 interface UserEntry {
   id: string;
@@ -223,8 +223,6 @@ export default function UsersManagement() {
           )}
         </div>
 
-        {/* Google Drive Settings - Admin only */}
-        <GoogleDriveSettings />
 
         <p className="text-xs font-polin-light text-muted-foreground text-center">
           שינוי תפקיד נכנס לתוקף בכניסה הבאה של המשתמש למערכת
