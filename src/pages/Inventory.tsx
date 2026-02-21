@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import * as XLSX from "xlsx";
+import { format } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,9 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Trash2, Car, Eye, Download, SlidersHorizontal, X, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plus, Search, Trash2, Car, Eye, Download, SlidersHorizontal, X, ChevronUp, ChevronDown, ChevronsUpDown, CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import ManufacturerLogo from "@/components/ManufacturerLogo";
 
 const statusLabels: Record<string, string> = {
@@ -77,6 +84,10 @@ export default function Inventory() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportMode, setExportMode] = useState<"filtered" | "all">("filtered");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -196,9 +207,26 @@ export default function Inventory() {
 
   const clearFilters = () => setFilters(emptyFilters);
 
-  const exportToExcel = () => {
-    const allVehicles = vehicles || [];
-    const rows = allVehicles.map((v) => ({
+  const doExport = () => {
+    const source = exportMode === "filtered" ? filtered : (vehicles || []);
+    let data = source;
+
+    // Apply date range filter on entry_date
+    if (dateFrom) {
+      const fromStr = format(dateFrom, "yyyy-MM-dd");
+      data = data.filter((v) => (v.entry_date || "") >= fromStr);
+    }
+    if (dateTo) {
+      const toStr = format(dateTo, "yyyy-MM-dd");
+      data = data.filter((v) => (v.entry_date || "") <= toStr);
+    }
+
+    if (data.length === 0) {
+      toast({ title: "אין נתונים לייצוא", variant: "destructive" });
+      return;
+    }
+
+    const rows = data.map((v) => ({
       "יצרן": v.manufacturer || "",
       "דגם": v.model || "",
       "רמת גימור": v.trim_level || "",
@@ -240,7 +268,10 @@ export default function Inventory() {
     XLSX.utils.book_append_sheet(wb, ws, "מלאי רכבים");
     ws["!cols"] = Array(Object.keys(rows[0] || {}).length).fill({ wch: 18 });
     XLSX.writeFile(wb, `מלאי_רכבים_${new Date().toLocaleDateString("he-IL").replace(/\//g, "-")}.xlsx`);
-    toast({ title: "הקובץ יוצא בהצלחה", description: `${allVehicles.length} רכבים יוצאו לאקסל` });
+    toast({ title: "הקובץ יוצא בהצלחה", description: `${data.length} רכבים יוצאו לאקסל` });
+    setExportOpen(false);
+    setDateFrom(undefined);
+    setDateTo(undefined);
   };
 
   return (
@@ -327,8 +358,7 @@ export default function Inventory() {
               )}
               <Button
                 variant="outline"
-                onClick={exportToExcel}
-                disabled={filtered.length === 0}
+                onClick={() => setExportOpen(true)}
                 className="h-10 font-polin-medium gap-1.5"
               >
                 <Download className="h-4 w-4" />
@@ -557,6 +587,81 @@ export default function Inventory() {
           </div>
         )}
       </main>
+
+      {/* Export Dialog */}
+      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="font-polin-medium">ייצוא לאקסל</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-5 py-2">
+            {/* Data source */}
+            <div className="space-y-2">
+              <Label className="font-polin-medium text-sm">איזה נתונים לייצא?</Label>
+              <RadioGroup value={exportMode} onValueChange={(v) => setExportMode(v as "filtered" | "all")} className="gap-3">
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="filtered" id="exp-filtered" />
+                  <Label htmlFor="exp-filtered" className="font-polin-light cursor-pointer">
+                    הנתונים המסוננים ({filtered.length} רכבים)
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="all" id="exp-all" />
+                  <Label htmlFor="exp-all" className="font-polin-light cursor-pointer">
+                    כל הנתונים ({vehicles?.length || 0} רכבים)
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Date range */}
+            <div className="space-y-2">
+              <Label className="font-polin-medium text-sm">טווח תאריכים (לפי תאריך כניסה)</Label>
+              <div className="flex items-center gap-3">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("flex-1 justify-start text-right font-polin-light h-9", !dateFrom && "text-muted-foreground")}>
+                      <CalendarIcon className="ml-2 h-4 w-4" />
+                      {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "מתאריך"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+
+                <span className="text-muted-foreground text-sm">—</span>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("flex-1 justify-start text-right font-polin-light h-9", !dateTo && "text-muted-foreground")}>
+                      <CalendarIcon className="ml-2 h-4 w-4" />
+                      {dateTo ? format(dateTo, "dd/MM/yyyy") : "עד תאריך"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              {(dateFrom || dateTo) && (
+                <Button variant="ghost" size="sm" className="text-xs font-polin-light h-7" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                  <X className="h-3 w-3 ml-1" /> נקה תאריכים
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setExportOpen(false)} className="font-polin-light">ביטול</Button>
+            <Button onClick={doExport} className="font-polin-medium gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90">
+              <Download className="h-4 w-4" />
+              ייצוא
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
