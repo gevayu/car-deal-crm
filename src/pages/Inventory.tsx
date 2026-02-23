@@ -207,7 +207,7 @@ export default function Inventory() {
 
   const clearFilters = () => setFilters(emptyFilters);
 
-  const doExport = () => {
+  const doExport = async () => {
     const source = exportMode === "filtered" ? filtered : (vehicles || []);
     let data = source;
 
@@ -225,6 +225,8 @@ export default function Inventory() {
       toast({ title: "אין נתונים לייצוא", variant: "destructive" });
       return;
     }
+
+    const vehicleIds = data.map((v) => v.id);
 
     const rows = data.map((v) => ({
       "יצרן": v.manufacturer || "",
@@ -267,6 +269,34 @@ export default function Inventory() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "מלאי רכבים");
     ws["!cols"] = Array(Object.keys(rows[0] || {}).length).fill({ wch: 18 });
+
+    // Fetch expenses for the exported vehicles
+    try {
+      const { data: expenses } = await supabase
+        .from("vehicle_expenses")
+        .select("*")
+        .in("vehicle_id", vehicleIds);
+
+      if (expenses && expenses.length > 0) {
+        // Build a lookup map for vehicle display name
+        const vehicleMap = new Map(data.map((v) => [v.id, `${v.manufacturer || ""} ${v.model || ""} (${v.license_plate || v.id.slice(0, 8)})`]));
+
+        const expenseRows = expenses.map((e) => ({
+          "רכב": vehicleMap.get(e.vehicle_id) || e.vehicle_id,
+          "תיאור": e.description || "",
+          "סכום": e.amount || 0,
+          "תאריך": e.expense_date || "",
+          "נוצר בתאריך": e.created_at ? format(new Date(e.created_at), "yyyy-MM-dd") : "",
+        }));
+
+        const wsExpenses = XLSX.utils.json_to_sheet(expenseRows);
+        XLSX.utils.book_append_sheet(wb, wsExpenses, "הוצאות");
+        wsExpenses["!cols"] = Array(Object.keys(expenseRows[0] || {}).length).fill({ wch: 20 });
+      }
+    } catch (err) {
+      console.error("Failed to fetch expenses for export", err);
+    }
+
     XLSX.writeFile(wb, `מלאי_רכבים_${new Date().toLocaleDateString("he-IL").replace(/\//g, "-")}.xlsx`);
     toast({ title: "הקובץ יוצא בהצלחה", description: `${data.length} רכבים יוצאו לאקסל` });
     setExportOpen(false);
