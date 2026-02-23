@@ -164,7 +164,7 @@ export default function VehicleDetail() {
 
   const set = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }));
 
-  const Field = ({ label, name, type = "text" }: { label: string; name: string; type?: string }) => (
+  const renderField = (label: string, name: string, type = "text") => (
     <div className="space-y-1.5">
       <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">{label}</Label>
       <Input
@@ -254,21 +254,21 @@ export default function VehicleDetail() {
           {/* ── Identification ── */}
           <Section title="פרטי זיהוי" icon={FileText}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-              <Field label="מספר רישוי" name="license_plate" />
-              <Field label="מספר שלדה" name="chassis_number" />
-              <Field label="קוד דגם" name="model_code" />
-              <Field label="מספר מנוע" name="engine_number" />
-              <Field label="קוד" name="code" />
+              {renderField("מספר רישוי", "license_plate")}
+              {renderField("מספר שלדה", "chassis_number")}
+              {renderField("קוד דגם", "model_code")}
+              {renderField("מספר מנוע", "engine_number")}
+              {renderField("קוד הנעה", "code")}
             </div>
           </Section>
 
           {/* ── Specs ── */}
           <Section title="מאפייני רכב" icon={Car}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-              <Field label="יצרן" name="manufacturer" />
-              <Field label="דגם" name="model" />
-              <Field label="רמת גימור" name="trim_level" />
-              <Field label="שנה" name="year" type="number" />
+              {renderField("יצרן", "manufacturer")}
+              {renderField("דגם", "model")}
+              {renderField("רמת גימור", "trim_level")}
+              {renderField("שנה", "year", "number")}
               <div className="space-y-1.5">
                 <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">סוג מנוע</Label>
                 <Select value={form.engine_type || ""} onValueChange={(v) => set("engine_type", v || null)} disabled={!isAdmin}>
@@ -283,22 +283,22 @@ export default function VehicleDetail() {
                   </SelectContent>
                 </Select>
               </div>
-              <Field label="נפח מנוע" name="engine_volume" />
-              <Field label="כוחות סוס" name="horsepower" />
-              <Field label="תיבת הילוכים" name="transmission" />
-              <Field label="צבע" name="color" />
-              <Field label="מקומות ישיבה" name="seats" type="number" />
-              <Field label="מספר דלתות" name="doors" type="number" />
+              {renderField("נפח מנוע", "engine_volume")}
+              {renderField("כוחות סוס", "horsepower")}
+              {renderField("תיבת הילוכים", "transmission")}
+              {renderField("צבע", "color")}
+              {renderField("מקומות ישיבה", "seats", "number")}
+              {renderField("מספר דלתות", "doors", "number")}
             </div>
           </Section>
 
           {/* ── Condition ── */}
           <Section title="מצב הרכב" icon={Wrench}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-              <Field label="יד" name="hand" type="number" />
-              <Field label='מד אוץ (ק"מ)' name="odometer" type="number" />
-              <Field label="טסט" name="test_date" type="date" />
-              <Field label="אגרת רישוי" name="registration_fee" type="number" />
+              {renderField("יד", "hand", "number")}
+              {renderField('מד אוץ (ק"מ)', "odometer", "number")}
+              {renderField("טסט", "test_date", "date")}
+              {renderField("אגרת רישוי", "registration_fee", "number")}
               <div className="flex flex-col gap-3 pt-1">
                 {[
                   { id: "original", key: "is_original", label: "מקורי", default: true },
@@ -359,10 +359,10 @@ export default function VehicleDetail() {
                   </SelectContent>
                 </Select>
               </div>
-              <Field label="מחיר מחירון דגם" name="list_price" type="number" />
-              <Field label="מחירון משוקלל" name="weighted_list_price" type="number" />
-              <Field label="מחיר מבוקש" name="asking_price" type="number" />
-              <Field label="מחיר קניה" name="purchase_price" type="number" />
+              {renderField("מחיר מחירון דגם", "list_price", "number")}
+              {renderField("מחירון משוקלל", "weighted_list_price", "number")}
+              {renderField("מחיר מבוקש", "asking_price", "number")}
+              {renderField("מחיר קניה", "purchase_price", "number")}
             </div>
             {/* Price summary bar – always visible when any price field exists */}
             {(form.asking_price != null || form.purchase_price != null) && (() => {
@@ -498,9 +498,9 @@ export default function VehicleDetail() {
           {/* ── Additional ── */}
           <Section title="מידע נוסף" icon={Info}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-              <Field label="סניף" name="branch" />
-              <Field label="תאריך כניסה למלאי" name="entry_date" type="date" />
-              <Field label="איש מכירות" name="salesperson" />
+              {renderField("סניף", "branch")}
+              {renderField("תאריך כניסה למלאי", "entry_date", "date")}
+              {renderField("איש מכירות", "salesperson")}
               <div className="col-span-full space-y-1.5">
                 <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">הערות</Label>
                 <Textarea value={form.notes ?? ""} onChange={(e) => set("notes", e.target.value)}
@@ -593,9 +593,9 @@ export default function VehicleDetail() {
                         setUploadingInspection(true);
                         if (inspectionFile) await supabase.storage.from("vehicle-documents").remove([inspectionFile.path]);
                         const path = `${id}/inspection_${Date.now()}_${file.name}`;
-                        const { error } = await supabase.storage.from("vehicle-documents").upload(path, file);
+                        const { error } = await supabase.storage.from("vehicle-documents").upload(path, file, { contentType: file.type });
                         setUploadingInspection(false);
-                        if (error) return;
+                        if (error) { toast({ title: "שגיאה בהעלאת קובץ", description: error.message, variant: "destructive" }); return; }
                         const { data: signed } = await supabase.storage.from("vehicle-documents").createSignedUrl(path, 3600);
                         setInspectionFile({ name: `inspection_${Date.now()}_${file.name}`, url: signed?.signedUrl ?? "", path });
                       }} />
@@ -613,7 +613,7 @@ export default function VehicleDetail() {
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                   <ExternalLink className="h-4 w-4 text-primary" />
                 </div>
-                <h2 className="font-polin-medium text-foreground">מסמכים נוספים</h2>
+                <h2 className="font-polin-medium text-foreground">מסמכי הרכב</h2>
               </div>
               <div className="p-6 space-y-3">
                 {documents.length === 0 ? (
@@ -650,15 +650,15 @@ export default function VehicleDetail() {
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-polin-light hover:bg-muted transition-colors mt-1">
                     <Upload className="h-4 w-4" />
                     {uploadingDoc ? "מעלה..." : "העלאת מסמך"}
-                    <input type="file" className="hidden" disabled={uploadingDoc}
+                    <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls" className="hidden" disabled={uploadingDoc}
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         setUploadingDoc(true);
                         const path = `${id}/${Date.now()}_${file.name}`;
-                        const { error } = await supabase.storage.from("vehicle-documents").upload(path, file);
+                        const { error } = await supabase.storage.from("vehicle-documents").upload(path, file, { contentType: file.type });
                         setUploadingDoc(false);
-                        if (error) return;
+                        if (error) { toast({ title: "שגיאה בהעלאת קובץ", description: error.message, variant: "destructive" }); return; }
                         const { data: signed } = await supabase.storage.from("vehicle-documents").createSignedUrl(path, 3600);
                         setDocuments(prev => [...prev, { name: file.name, url: signed?.signedUrl ?? "", path }]);
                       }} />
