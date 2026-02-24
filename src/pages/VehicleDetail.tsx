@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,7 @@ const emptyVehicle: Partial<TablesInsert<"vehicles">> = {
 export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
   const isNew = id === "new";
+  const vehicleId = useMemo(() => (isNew ? crypto.randomUUID() : id!), [id, isNew]);
   const navigate = useNavigate();
   const { isAdmin, user } = useAuth();
   const { toast } = useToast();
@@ -61,10 +62,10 @@ export default function VehicleDetail() {
   const [addingExpense, setAddingExpense] = useState(false);
 
   const { data: vehicle, isLoading } = useQuery({
-    queryKey: ["vehicle", id],
+    queryKey: ["vehicle", vehicleId],
     queryFn: async () => {
       if (isNew) return null;
-      const { data, error } = await supabase.from("vehicles").select("*").eq("id", id!).single();
+      const { data, error } = await supabase.from("vehicles").select("*").eq("id", vehicleId).single();
       if (error) throw error;
       return data;
     },
@@ -77,47 +78,46 @@ export default function VehicleDetail() {
 
   // Load photos, docs & inspection
   useEffect(() => {
-    if (isNew || !id) return;
+    if (isNew) return;
     const loadFiles = async () => {
-      const { data: photoFiles } = await supabase.storage.from("vehicle-photos").list(id);
+      const { data: photoFiles } = await supabase.storage.from("vehicle-photos").list(vehicleId);
       if (photoFiles) {
-        setPhotos(photoFiles.map(f => supabase.storage.from("vehicle-photos").getPublicUrl(`${id}/${f.name}`).data.publicUrl));
+        setPhotos(photoFiles.map(f => supabase.storage.from("vehicle-photos").getPublicUrl(`${vehicleId}/${f.name}`).data.publicUrl));
       }
-      const { data: docFiles } = await supabase.storage.from("vehicle-documents").list(id);
+      const { data: docFiles } = await supabase.storage.from("vehicle-documents").list(vehicleId);
       if (docFiles) {
         const generalFiles = docFiles.filter(f => !f.name.startsWith("inspection_"));
         const inspectionItem = docFiles.find(f => f.name.startsWith("inspection_"));
-        // Get signed URLs for documents
         const docsWithUrls = await Promise.all(generalFiles.map(async (f) => {
-          const { data } = await supabase.storage.from("vehicle-documents").createSignedUrl(`${id}/${f.name}`, 3600);
-          return { name: f.name, url: data?.signedUrl ?? "", path: `${id}/${f.name}` };
+          const { data } = await supabase.storage.from("vehicle-documents").createSignedUrl(`${vehicleId}/${f.name}`, 3600);
+          return { name: f.name, url: data?.signedUrl ?? "", path: `${vehicleId}/${f.name}` };
         }));
         setDocuments(docsWithUrls);
         if (inspectionItem) {
-          const { data } = await supabase.storage.from("vehicle-documents").createSignedUrl(`${id}/${inspectionItem.name}`, 3600);
-          setInspectionFile({ name: inspectionItem.name, url: data?.signedUrl ?? "", path: `${id}/${inspectionItem.name}` });
+          const { data } = await supabase.storage.from("vehicle-documents").createSignedUrl(`${vehicleId}/${inspectionItem.name}`, 3600);
+          setInspectionFile({ name: inspectionItem.name, url: data?.signedUrl ?? "", path: `${vehicleId}/${inspectionItem.name}` });
         }
       }
     };
     loadFiles();
-  }, [id, isNew]);
+  }, [vehicleId, isNew]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: Record<string, any>) => {
       if (isNew) {
-        const { data: inserted, error } = await supabase.from("vehicles").insert({ ...data, created_by: user?.id }).select("id").single();
+        const { error } = await supabase.from("vehicles").insert({ ...data, id: vehicleId, created_by: user?.id });
         if (error) throw error;
-        return inserted.id as string;
+        return vehicleId;
       } else {
-        const { error } = await supabase.from("vehicles").update(data).eq("id", id!);
+        const { error } = await supabase.from("vehicles").update(data).eq("id", vehicleId);
         if (error) throw error;
-        return id!;
+        return vehicleId;
       }
     },
     onSuccess: (newId: string) => {
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
       toast({ title: isNew ? "הרכב נוסף בהצלחה!" : "הרכב עודכן בהצלחה!" });
-      if (isNew) navigate(`/vehicle/${newId}`, { replace: true });
+      if (isNew) navigate(`/vehicle/${vehicleId}`, { replace: true });
     },
     onError: (err: Error) => {
       toast({ title: "שגיאה", description: err.message, variant: "destructive" });
@@ -126,18 +126,18 @@ export default function VehicleDetail() {
 
   // Expenses
   const { data: expenses = [], refetch: refetchExpenses } = useQuery({
-    queryKey: ["vehicle_expenses", id],
+    queryKey: ["vehicle_expenses", vehicleId],
     queryFn: async () => {
-      if (isNew || !id) return [];
+      if (isNew) return [];
       const { data, error } = await supabase
         .from("vehicle_expenses" as any)
         .select("*")
-        .eq("vehicle_id", id)
+        .eq("vehicle_id", vehicleId)
         .order("expense_date", { ascending: false });
       if (error) throw error;
       return (data as unknown) as { id: string; expense_date: string; amount: number; description: string }[];
     },
-    enabled: !isNew && !!id,
+    enabled: !isNew,
   });
 
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
@@ -145,7 +145,7 @@ export default function VehicleDetail() {
   const addExpenseMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("vehicle_expenses" as any).insert({
-        vehicle_id: id,
+        vehicle_id: vehicleId,
         expense_date: newExpense.expense_date || new Date().toISOString().slice(0, 10),
         amount: Number(newExpense.amount) || 0,
         description: newExpense.description,
@@ -406,8 +406,7 @@ export default function VehicleDetail() {
           </Section>
 
           {/* ── Expenses ── */}
-          {!isNew && (
-            <div className="bg-card rounded-2xl border shadow-card overflow-hidden">
+          <div className="bg-card rounded-2xl border shadow-card overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4 border-b bg-muted/30">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -497,7 +496,6 @@ export default function VehicleDetail() {
                 )}
               </div>
             </div>
-          )}
 
           {/* ── Additional ── */}
           <Section title="מידע נוסף" icon={Info}>
@@ -514,8 +512,7 @@ export default function VehicleDetail() {
           </Section>
 
           {/* ── Gallery ── */}
-          {!isNew && (
-            <div className="bg-card rounded-2xl border shadow-card overflow-hidden">
+          <div className="bg-card rounded-2xl border shadow-card overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4 border-b bg-muted/30">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center">
@@ -530,14 +527,12 @@ export default function VehicleDetail() {
                 )}
               </div>
               <div className="p-6">
-                <VehicleGallery vehicleId={id!} photos={photos} onPhotosChange={setPhotos} isAdmin={isAdmin} />
+              <VehicleGallery vehicleId={vehicleId} photos={photos} onPhotosChange={setPhotos} isAdmin={isAdmin} />
               </div>
             </div>
-          )}
 
           {/* ── Inspection ── */}
-          {!isNew && (
-            <div className="bg-card rounded-2xl border border-accent/25 shadow-card overflow-hidden">
+          <div className="bg-card rounded-2xl border border-accent/25 shadow-card overflow-hidden">
               <div className="flex items-center gap-3 px-6 py-4 border-b bg-accent/5">
                 <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center">
                   <ClipboardCheck className="h-4 w-4 text-accent" />
@@ -596,7 +591,7 @@ export default function VehicleDetail() {
                         if (!file) return;
                         setUploadingInspection(true);
                         if (inspectionFile) await supabase.storage.from("vehicle-documents").remove([inspectionFile.path]);
-                        const path = `${id}/inspection_${Date.now()}_${file.name}`;
+                        const path = `${vehicleId}/inspection_${Date.now()}_${file.name}`;
                         const { error } = await supabase.storage.from("vehicle-documents").upload(path, file, { contentType: file.type });
                         setUploadingInspection(false);
                         if (error) { toast({ title: "שגיאה בהעלאת קובץ", description: error.message, variant: "destructive" }); return; }
@@ -608,11 +603,9 @@ export default function VehicleDetail() {
                 <p className="text-xs font-polin-light text-muted-foreground">פורמטים מקובלים: PDF, Word, תמונה</p>
               </div>
             </div>
-          )}
 
           {/* ── Documents ── */}
-          {!isNew && (
-            <div className="bg-card rounded-2xl border shadow-card overflow-hidden">
+          <div className="bg-card rounded-2xl border shadow-card overflow-hidden">
               <div className="flex items-center gap-3 px-6 py-4 border-b bg-muted/30">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                   <ExternalLink className="h-4 w-4 text-primary" />
@@ -659,7 +652,7 @@ export default function VehicleDetail() {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         setUploadingDoc(true);
-                        const path = `${id}/${Date.now()}_${file.name}`;
+                        const path = `${vehicleId}/${Date.now()}_${file.name}`;
                         const { error } = await supabase.storage.from("vehicle-documents").upload(path, file, { contentType: file.type });
                         setUploadingDoc(false);
                         if (error) { toast({ title: "שגיאה בהעלאת קובץ", description: error.message, variant: "destructive" }); return; }
@@ -670,7 +663,6 @@ export default function VehicleDetail() {
                 )}
               </div>
             </div>
-          )}
 
           {/* bottom padding for sticky bar */}
           <div className="h-6" />
