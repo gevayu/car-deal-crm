@@ -20,6 +20,18 @@ import VehicleGallery from "@/components/VehicleGallery";
 
 type Vehicle = Tables<"vehicles">;
 
+const SectionBlock = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => (
+  <div className="bg-card rounded-2xl border shadow-card overflow-hidden">
+    <div className="flex items-center gap-3 px-6 py-4 border-b bg-muted/30">
+      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+        <Icon className="h-4 w-4 text-primary" />
+      </div>
+      <h2 className="font-polin-medium text-foreground">{title}</h2>
+    </div>
+    <div className="p-6">{children}</div>
+  </div>
+);
+
 const emptyVehicle: Partial<TablesInsert<"vehicles">> = {
   license_plate: "", chassis_number: "", model_code: "", engine_number: "", code: "",
   manufacturer: "", model: "", trim_level: "", year: undefined, engine_type: "",
@@ -93,17 +105,19 @@ export default function VehicleDetail() {
   const saveMutation = useMutation({
     mutationFn: async (data: Record<string, any>) => {
       if (isNew) {
-        const { error } = await supabase.from("vehicles").insert({ ...data, created_by: user?.id });
+        const { data: inserted, error } = await supabase.from("vehicles").insert({ ...data, created_by: user?.id }).select("id").single();
         if (error) throw error;
+        return inserted.id as string;
       } else {
         const { error } = await supabase.from("vehicles").update(data).eq("id", id!);
         if (error) throw error;
+        return id!;
       }
     },
-    onSuccess: () => {
+    onSuccess: (newId: string) => {
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
       toast({ title: isNew ? "הרכב נוסף בהצלחה!" : "הרכב עודכן בהצלחה!" });
-      if (isNew) navigate("/");
+      if (isNew) navigate(`/vehicle/${newId}`, { replace: true });
     },
     onError: (err: Error) => {
       toast({ title: "שגיאה", description: err.message, variant: "destructive" });
@@ -177,17 +191,7 @@ export default function VehicleDetail() {
     </div>
   );
 
-  const Section = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => (
-    <div className="bg-card rounded-2xl border shadow-card overflow-hidden">
-      <div className="flex items-center gap-3 px-6 py-4 border-b bg-muted/30">
-        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Icon className="h-4 w-4 text-primary" />
-        </div>
-        <h2 className="font-polin-medium text-foreground">{title}</h2>
-      </div>
-      <div className="p-6">{children}</div>
-    </div>
-  );
+  const Section = SectionBlock;
 
   const STATUS_COLORS: Record<string, string> = {
     available: "bg-green-100 text-green-700 border border-green-200",
