@@ -586,17 +586,25 @@ export default function VehicleDetail() {
                     {uploadingInspection ? "מעלה..." : inspectionFile ? "החלף קובץ בדיקה" : "העלה קובץ בדיקה"}
                     <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" className="hidden"
                       disabled={uploadingInspection}
+                      onClick={(e) => { (e.target as HTMLInputElement).value = ""; }}
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         setUploadingInspection(true);
-                        if (inspectionFile) await supabase.storage.from("vehicle-documents").remove([inspectionFile.path]);
-                        const path = `${vehicleId}/inspection_${Date.now()}_${file.name}`;
-                        const { error } = await supabase.storage.from("vehicle-documents").upload(path, file, { contentType: file.type });
-                        setUploadingInspection(false);
-                        if (error) { toast({ title: "שגיאה בהעלאת קובץ", description: error.message, variant: "destructive" }); return; }
-                        const { data: signed } = await supabase.storage.from("vehicle-documents").createSignedUrl(path, 3600);
-                        setInspectionFile({ name: `inspection_${Date.now()}_${file.name}`, url: signed?.signedUrl ?? "", path });
+                        try {
+                          if (inspectionFile) await supabase.storage.from("vehicle-documents").remove([inspectionFile.path]);
+                          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                          const path = `${vehicleId}/inspection_${Date.now()}_${safeName}`;
+                          const { error } = await supabase.storage.from("vehicle-documents").upload(path, file, { contentType: file.type || "application/octet-stream" });
+                          if (error) { toast({ title: "שגיאה בהעלאת קובץ", description: error.message, variant: "destructive" }); return; }
+                          const { data: signed } = await supabase.storage.from("vehicle-documents").createSignedUrl(path, 3600);
+                          setInspectionFile({ name: `inspection_${Date.now()}_${safeName}`, url: signed?.signedUrl ?? "", path });
+                          toast({ title: "קובץ הבדיקה הועלה בהצלחה" });
+                        } catch (err: any) {
+                          toast({ title: "שגיאה בהעלאת קובץ", description: err.message, variant: "destructive" });
+                        } finally {
+                          setUploadingInspection(false);
+                        }
                       }} />
                   </label>
                 )}
@@ -648,16 +656,24 @@ export default function VehicleDetail() {
                     <Upload className="h-4 w-4" />
                     {uploadingDoc ? "מעלה..." : "העלאת מסמך"}
                     <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls" className="hidden" disabled={uploadingDoc}
+                      onClick={(e) => { (e.target as HTMLInputElement).value = ""; }}
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         setUploadingDoc(true);
-                        const path = `${vehicleId}/${Date.now()}_${file.name}`;
-                        const { error } = await supabase.storage.from("vehicle-documents").upload(path, file, { contentType: file.type });
-                        setUploadingDoc(false);
-                        if (error) { toast({ title: "שגיאה בהעלאת קובץ", description: error.message, variant: "destructive" }); return; }
-                        const { data: signed } = await supabase.storage.from("vehicle-documents").createSignedUrl(path, 3600);
-                        setDocuments(prev => [...prev, { name: file.name, url: signed?.signedUrl ?? "", path }]);
+                        try {
+                          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                          const path = `${vehicleId}/${Date.now()}_${safeName}`;
+                          const { error } = await supabase.storage.from("vehicle-documents").upload(path, file, { contentType: file.type || "application/octet-stream" });
+                          if (error) { toast({ title: "שגיאה בהעלאת קובץ", description: error.message, variant: "destructive" }); return; }
+                          const { data: signed } = await supabase.storage.from("vehicle-documents").createSignedUrl(path, 3600);
+                          setDocuments(prev => [...prev, { name: file.name, url: signed?.signedUrl ?? "", path }]);
+                          toast({ title: "הקובץ הועלה בהצלחה" });
+                        } catch (err: any) {
+                          toast({ title: "שגיאה בהעלאת קובץ", description: err.message, variant: "destructive" });
+                        } finally {
+                          setUploadingDoc(false);
+                        }
                       }} />
                   </label>
                 )}
