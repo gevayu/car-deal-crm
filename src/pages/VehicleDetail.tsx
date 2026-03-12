@@ -130,12 +130,12 @@ export default function VehicleDetail() {
     queryFn: async () => {
       if (isNew) return [];
       const { data, error } = await supabase
-        .from("vehicle_expenses" as any)
+        .from("vehicle_expenses")
         .select("*")
         .eq("vehicle_id", vehicleId)
         .order("expense_date", { ascending: false });
       if (error) throw error;
-      return (data as unknown) as { id: string; expense_date: string; amount: number; description: string }[];
+      return data as { id: string; expense_date: string; amount: number; description: string }[];
     },
     enabled: !isNew,
   });
