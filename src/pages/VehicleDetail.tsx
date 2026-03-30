@@ -36,7 +36,7 @@ const emptyVehicle: Partial<TablesInsert<"vehicles">> = {
   license_plate: "", chassis_number: "", model_code: "", engine_number: "", code: "",
   manufacturer: "", model: "", trim_level: "", year: undefined, engine_type: "",
   engine_volume: "", horsepower: "", transmission: "", color: "", seats: undefined, doors: undefined,
-  hand: undefined, is_original: true, odometer: undefined, test_date: undefined,
+  hand: undefined, original_hand: undefined, current_hand: undefined, is_original: true, odometer: undefined, test_date: undefined,
   registration_fee: undefined, needs_route: false, is_pledged: false,
   deal_type: "regular_sale", status: "available",
   list_price: undefined, weighted_list_price: undefined, asking_price: undefined,
@@ -303,7 +303,8 @@ export default function VehicleDetail() {
           {/* ── Condition ── */}
           <Section title="מצב הרכב" icon={Wrench}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-              {renderField("יד", "hand", "number")}
+              {renderField("יד מקורית", "original_hand", "number")}
+              {renderField("יד נוכחית", "current_hand", "number")}
               {renderField('מד אוץ (ק"מ)', "odometer", "number")}
               {renderField("טסט", "test_date", "date")}
               {renderField("אגרת רישוי", "registration_fee", "number")}
