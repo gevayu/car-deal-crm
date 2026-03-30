@@ -297,8 +297,8 @@ export default function VehicleDetail() {
               {renderField("צבע", "color")}
               {renderField("מקומות ישיבה", "seats", "number")}
               {renderField("מספר דלתות", "doors", "number")}
-              {renderField("יד מקורית", "original_hand", "number")}
-              {renderField("יד נוכחית", "current_hand", "number")}
+              {renderField("יד מקורית", "original_hand", "text")}
+              {renderField("יד נוכחית", "current_hand", "text")}
             </div>
           </Section>
 
