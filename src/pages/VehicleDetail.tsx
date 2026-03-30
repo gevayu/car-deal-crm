@@ -303,7 +303,8 @@ export default function VehicleDetail() {
           {/* ── Condition ── */}
           <Section title="מצב הרכב" icon={Wrench}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-              {renderField("יד", "hand", "number")}
+              {renderField("יד מקורית", "original_hand", "number")}
+              {renderField("יד נוכחית", "current_hand", "number")}
               {renderField('מד אוץ (ק"מ)', "odometer", "number")}
               {renderField("טסט", "test_date", "date")}
               {renderField("אגרת רישוי", "registration_fee", "number")}

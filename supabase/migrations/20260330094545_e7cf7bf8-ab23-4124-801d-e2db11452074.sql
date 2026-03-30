@@ -1,0 +1,1 @@
+ALTER TABLE public.vehicles ADD COLUMN original_hand integer, ADD COLUMN current_hand integer;
