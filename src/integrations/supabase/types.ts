@@ -122,7 +122,7 @@ export type Database = {
           color: string | null
           created_at: string
           created_by: string | null
-          current_hand: number | null
+          current_hand: string | null
           deal_type: Database["public"]["Enums"]["deal_type"] | null
           doors: number | null
           engine_number: string | null
@@ -143,7 +143,7 @@ export type Database = {
           needs_route: boolean | null
           notes: string | null
           odometer: number | null
-          original_hand: number | null
+          original_hand: string | null
           purchase_price: number | null
           registration_fee: number | null
           salesperson: string | null
@@ -165,7 +165,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           created_by?: string | null
-          current_hand?: number | null
+          current_hand?: string | null
           deal_type?: Database["public"]["Enums"]["deal_type"] | null
           doors?: number | null
           engine_number?: string | null
@@ -186,7 +186,7 @@ export type Database = {
           needs_route?: boolean | null
           notes?: string | null
           odometer?: number | null
-          original_hand?: number | null
+          original_hand?: string | null
           purchase_price?: number | null
           registration_fee?: number | null
           salesperson?: string | null
@@ -208,7 +208,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           created_by?: string | null
-          current_hand?: number | null
+          current_hand?: string | null
           deal_type?: Database["public"]["Enums"]["deal_type"] | null
           doors?: number | null
           engine_number?: string | null
@@ -229,7 +229,7 @@ export type Database = {
           needs_route?: boolean | null
           notes?: string | null
           odometer?: number | null
-          original_hand?: number | null
+          original_hand?: string | null
           purchase_price?: number | null
           registration_fee?: number | null
           salesperson?: string | null
