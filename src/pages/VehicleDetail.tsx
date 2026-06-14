@@ -266,7 +266,7 @@ export default function VehicleDetail() {
               {renderField("מספר שלדה", "chassis_number")}
               {renderField("קוד דגם", "model_code")}
               {renderField("מספר מנוע", "engine_number")}
-              {renderField("קוד הנעה", "code")}
+              {renderField("קוד הנעה", "code", "text", true)}
             </div>
           </Section>
 
