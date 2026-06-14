@@ -182,14 +182,14 @@ export default function VehicleDetail() {
 
   const set = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }));
 
-  const renderField = (label: string, name: string, type = "text") => (
+  const renderField = (label: string, name: string, type = "text", editableBySales = false) => (
     <div className="space-y-1.5">
       <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">{label}</Label>
       <Input
         type={type}
         value={form[name] ?? ""}
         onChange={(e) => set(name, type === "number" ? (e.target.value ? Number(e.target.value) : undefined) : e.target.value)}
-        disabled={!isAdmin}
+        disabled={!isAdmin && !editableBySales}
         className="font-polin-light h-10"
       />
     </div>
