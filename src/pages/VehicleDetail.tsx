@@ -177,6 +177,10 @@ export default function VehicleDetail() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const { id: _id, created_at, updated_at, ...rest } = form;
+    if (!isAdmin && !isNew) {
+      saveMutation.mutate({ code: rest.code ?? null });
+      return;
+    }
     saveMutation.mutate(rest);
   };
 
