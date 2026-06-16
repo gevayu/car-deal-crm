@@ -690,20 +690,18 @@ export default function VehicleDetail() {
         </div>
 
         {/* ── Sticky Save Bar ── */}
-        {isAdmin && (
-          <div className="sticky bottom-0 z-20 border-t bg-card/95 backdrop-blur-sm shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
-            <div className="px-6 py-3 flex items-center justify-between max-w-5xl mx-auto">
-              <p className="text-xs font-polin-light text-muted-foreground">
-                {isNew ? "מלא את הפרטים ולחץ שמירה להוספת הרכב" : "שנה פרטים ולחץ שמירה לעדכון"}
-              </p>
-              <Button type="submit" disabled={saveMutation.isPending}
-                className="bg-accent hover:bg-accent/90 text-accent-foreground font-polin-medium gap-2 px-6 shadow-card">
-                <Save className="h-4 w-4" />
-                {saveMutation.isPending ? "שומר..." : isNew ? "הוסף רכב" : "שמור שינויים"}
-              </Button>
-            </div>
+        <div className="sticky bottom-0 z-20 border-t bg-card/95 backdrop-blur-sm shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
+          <div className="px-6 py-3 flex items-center justify-between max-w-5xl mx-auto">
+            <p className="text-xs font-polin-light text-muted-foreground">
+              {isNew ? "מלא את הפרטים ולחץ שמירה להוספת הרכב" : isAdmin ? "שנה פרטים ולחץ שמירה לעדכון" : "ערוך קוד הנעה ולחץ שמירה"}
+            </p>
+            <Button type="submit" disabled={saveMutation.isPending}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground font-polin-medium gap-2 px-6 shadow-card">
+              <Save className="h-4 w-4" />
+              {saveMutation.isPending ? "שומר..." : isNew ? "הוסף רכב" : "שמור שינויים"}
+            </Button>
           </div>
-        )}
+        </div>
       </form>
     </div>
   );
